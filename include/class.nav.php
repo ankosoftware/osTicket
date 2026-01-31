@@ -254,6 +254,7 @@ class AdminNav extends StaffNav{
                     $subnav[]=array('desc'=>__('SLA'),'href'=>'slas.php','iconclass'=>'sla');
                     $subnav[]=array('desc'=>__('Schedules'),'href'=>'schedules.php','iconclass'=>'lists');
                     $subnav[]=array('desc'=>__('API'),'href'=>'apikeys.php','iconclass'=>'api');
+                    $subnav[]=array('desc'=>__('MCP'),'href'=>'mcp.php','title'=>__('Model Context Protocol'),'iconclass'=>'api');
                     $subnav[]=array('desc'=>__('Pages'), 'href'=>'pages.php','title'=>'Pages','iconclass'=>'pages');
                     $subnav[]=array('desc'=>__('Forms'),'href'=>'forms.php','iconclass'=>'forms');
                     $subnav[]=array('desc'=>__('Lists'),'href'=>'lists.php','iconclass'=>'lists');
