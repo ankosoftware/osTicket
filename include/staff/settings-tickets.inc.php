@@ -235,6 +235,13 @@ if(!($maxfileuploads=ini_get('max_file_uploads')))
             </td>
         </tr>
         <tr>
+            <td><?php echo __('Allow Clients to Close Tickets'); ?>:</td>
+            <td>
+                <input type="checkbox" name="allow_client_close" <?php echo $config['allow_client_close']?'checked="checked"':''; ?>>
+                <?php echo __('Enable'); ?>&nbsp;<i class="help-tip icon-question-sign" href="#allow_client_close"></i>
+            </td>
+        </tr>
+        <tr>
             <td><?php echo __('Allow External Images'); ?>:</td>
             <td>
                 <input type="checkbox" name="allow_external_images" <?php echo $config['allow_external_images']?'checked="checked"':''; ?>>

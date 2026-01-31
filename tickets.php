@@ -109,6 +109,22 @@ if ($_POST && is_object($ticket) && $ticket->getId()) {
             $errors['err'] = __('Correct any errors below and try again.');
         }
         break;
+    case 'close':
+        if (!$cfg->allowClientClose())
+            $errors['err'] = __('Access Denied');
+        elseif ($thisclient->getId() != $ticket->getUserId())
+            $errors['err'] = __('Only the ticket owner can close this ticket');
+        elseif ($ticket->isClosed())
+            $errors['err'] = __('Ticket is already closed');
+        else {
+            $errors_arr = array();
+            if ($ticket->setStatus('closed', '', $errors_arr, false)) {
+                $msg = __('Ticket closed successfully');
+            } else {
+                $errors['err'] = $errors_arr['err'] ?: __('Unable to close ticket');
+            }
+        }
+        break;
     default:
         $errors['err']=__('Unknown action');
     }

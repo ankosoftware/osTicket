@@ -258,6 +258,7 @@ class OsticketConfig extends Config {
         'files_req_auth' => 1,
         'force_https' => '',
         'allow_external_images' => 0,
+        'allow_client_close' => 0,
     );
 
     function __construct($section=null) {
@@ -1081,6 +1082,10 @@ class OsticketConfig extends Config {
         return $this->get('require_topic_to_close');
     }
 
+    function allowClientClose() {
+        return $this->get('allow_client_close');
+    }
+
     function allowExternalImages() {
         return ($this->get('allow_external_images'));
     }
@@ -1465,6 +1470,7 @@ class OsticketConfig extends Config {
             'auto_refer_closed' => isset($vars['auto_refer_closed']) ? 1 : 0,
             'collaborator_ticket_visibility'=>isset($vars['collaborator_ticket_visibility'])?1:0,
             'require_topic_to_close'=>isset($vars['require_topic_to_close'])?1:0,
+            'allow_client_close'=>isset($vars['allow_client_close'])?1:0,
             'show_related_tickets'=>isset($vars['show_related_tickets'])?1:0,
             'allow_client_updates'=>isset($vars['allow_client_updates'])?1:0,
             'ticket_lock' => $vars['ticket_lock'],

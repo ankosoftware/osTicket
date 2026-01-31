@@ -50,6 +50,17 @@ if ($thisclient && $thisclient->isGuest()
                 <a class="action-button" href="tickets.php?a=edit&id=<?php
                      echo $ticket->getId(); ?>"><i class="icon-edit"></i> <?php echo __('Edit'); ?></a>
 <?php } ?>
+<?php if ($cfg->allowClientClose()
+        && !$ticket->isClosed()
+        && $thisclient->getId() == $ticket->getUserId()) { ?>
+                <form action="tickets.php?id=<?php echo $ticket->getId(); ?>" method="post" style="display:inline;">
+                    <?php echo csrf_token(); ?>
+                    <input type="hidden" name="a" value="close">
+                    <button type="submit" class="action-button" onclick="return confirm('<?php echo __('Are you sure you want to close this ticket?'); ?>');">
+                        <i class="icon-ok-circle"></i> <?php echo __('Close'); ?>
+                    </button>
+                </form>
+<?php } ?>
 </div>
             </h1>
         </td>
