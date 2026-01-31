@@ -3270,10 +3270,8 @@ class McpProtocolHandler {
         );
 
         // Add all attachments (both inline and separate)
-        if ($entry->getAttachments()) {
-            foreach ($entry->getAttachments()->getAll() as $att) {
-                $data['attachments'][] = $this->formatAttachment($att);
-            }
+        foreach ($entry->getAttachments() as $att) {
+            $data['attachments'][] = $this->formatAttachment($att);
         }
 
         return $data;
