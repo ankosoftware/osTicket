@@ -1483,25 +1483,32 @@ implements RestrictedAccess, Threadable, Searchable {
     function setStatus($status, $comments='', &$errors=array(), $set_closing_agent=true, $force_close=false) {
         global $cfg, $thisstaff;
 
-        if ($thisstaff && !($role=$this->getRole($thisstaff)))
+        if ($thisstaff && !($role=$this->getRole($thisstaff))) {
+            $errors['err'] = __('Permission denied: No access to this ticket');
             return false;
+        }
 
         if ((!$status instanceof TicketStatus)
-                && !($status = TicketStatus::lookup($status)))
+                && !($status = TicketStatus::lookup($status))) {
+            $errors['err'] = __('Invalid or unknown ticket status');
             return false;
+        }
 
         // Double check permissions (when changing status)
         if ($role && $this->getStatusId()) {
             switch ($status->getState()) {
             case 'closed':
-                if (!($role->hasPerm(Ticket::PERM_CLOSE)))
+                if (!($role->hasPerm(Ticket::PERM_CLOSE))) {
+                    $errors['err'] = __('Permission denied: You do not have permission to close tickets');
                     return false;
+                }
                 break;
             case 'deleted':
                 // XXX: intercept deleted status and do hard delete TODO: soft deletes
                 if ($role->hasPerm(Ticket::PERM_DELETE))
                     return $this->delete($comments);
-                // Agent doesn't have permission to delete  tickets
+                // Agent doesn't have permission to delete tickets
+                $errors['err'] = __('Permission denied: You do not have permission to delete tickets');
                 return false;
                 break;
             }
@@ -1569,13 +1576,16 @@ implements RestrictedAccess, Threadable, Searchable {
                     $this->isanswered = 0;
                 break;
             default:
+                $errors['err'] = sprintf(__('Invalid status state: %s'), $status->getState());
                 return false;
 
         }
 
         $this->status = $status;
-        if (!$this->save(true))
+        if (!$this->save(true)) {
+            $errors['err'] = __('Unable to save ticket status change. Please try again.');
             return false;
+        }
 
         // Refer thread to previously assigned or closing agent
         if ($refer && $cfg->autoReferTicketsOnClose())
