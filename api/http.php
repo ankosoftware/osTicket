@@ -21,7 +21,7 @@ $dispatcher = patterns('',
         url('^/tasks/', patterns('',
                 url_post("^cron$", array('api.cron.php:CronApiController', 'execute'))
          )),
-        url_post("^/?mcp\.json$", array('api.mcp.php:McpApiController', 'handle'))
+        url_post("^/mcp\.json$", array('api.mcp.php:McpApiController', 'handle'))
         );
 
 // Send api signal so backend can register endpoints
