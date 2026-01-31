@@ -1488,10 +1488,18 @@ implements RestrictedAccess, Threadable, Searchable {
             return false;
         }
 
-        if ((!$status instanceof TicketStatus)
-                && !($status = TicketStatus::lookup($status))) {
-            $errors['err'] = __('Invalid or unknown ticket status');
-            return false;
+        if (!$status instanceof TicketStatus) {
+            // Try to lookup by ID first, then by state name
+            if (is_numeric($status)) {
+                $status = TicketStatus::lookup($status);
+            } else {
+                // Lookup by state name (e.g., 'closed', 'open')
+                $status = TicketStatus::lookup(array('state' => $status));
+            }
+            if (!$status) {
+                $errors['err'] = __('Invalid or unknown ticket status');
+                return false;
+            }
         }
 
         // Double check permissions (when changing status)
