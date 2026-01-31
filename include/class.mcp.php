@@ -405,6 +405,391 @@ class McpProtocolHandler {
                     ),
                     'required' => array('task_id', 'action')
                 )
+            ),
+            // Knowledge Base (FAQ) Tools
+            'search_faqs' => array(
+                'name' => 'search_faqs',
+                'description' => 'Search FAQ articles with filters for category, visibility, and text search',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'q' => array(
+                            'type' => 'string',
+                            'description' => 'Full-text search in question/answer/keywords'
+                        ),
+                        'category_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Filter by category ID'
+                        ),
+                        'visibility' => array(
+                            'type' => 'string',
+                            'description' => 'Filter by visibility (internal, public, featured)',
+                            'enum' => array('internal', 'public', 'featured')
+                        ),
+                        'page' => array(
+                            'type' => 'integer',
+                            'description' => 'Page number for pagination (default: 1)',
+                            'default' => 1
+                        ),
+                        'limit' => array(
+                            'type' => 'integer',
+                            'description' => 'Results per page (default: 25, max: 100)',
+                            'default' => 25
+                        )
+                    )
+                )
+            ),
+            'get_faq' => array(
+                'name' => 'get_faq',
+                'description' => 'Get full details of an FAQ article including question, answer, keywords, notes, and associated help topics',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'faq_id' => array(
+                            'type' => 'integer',
+                            'description' => 'FAQ ID'
+                        )
+                    ),
+                    'required' => array('faq_id')
+                )
+            ),
+            'create_faq' => array(
+                'name' => 'create_faq',
+                'description' => 'Create a new FAQ article',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'question' => array(
+                            'type' => 'string',
+                            'description' => 'FAQ question'
+                        ),
+                        'answer' => array(
+                            'type' => 'string',
+                            'description' => 'FAQ answer (supports HTML)'
+                        ),
+                        'category_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Category ID'
+                        ),
+                        'visibility' => array(
+                            'type' => 'string',
+                            'description' => 'Visibility (internal, public, featured)',
+                            'enum' => array('internal', 'public', 'featured'),
+                            'default' => 'internal'
+                        ),
+                        'keywords' => array(
+                            'type' => 'string',
+                            'description' => 'Search keywords'
+                        ),
+                        'notes' => array(
+                            'type' => 'string',
+                            'description' => 'Internal notes'
+                        ),
+                        'topic_ids' => array(
+                            'type' => 'array',
+                            'items' => array('type' => 'integer'),
+                            'description' => 'Associated help topic IDs'
+                        )
+                    ),
+                    'required' => array('question', 'answer', 'category_id')
+                )
+            ),
+            'update_faq' => array(
+                'name' => 'update_faq',
+                'description' => 'Update an existing FAQ article',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'faq_id' => array(
+                            'type' => 'integer',
+                            'description' => 'FAQ ID'
+                        ),
+                        'question' => array(
+                            'type' => 'string',
+                            'description' => 'FAQ question'
+                        ),
+                        'answer' => array(
+                            'type' => 'string',
+                            'description' => 'FAQ answer (supports HTML)'
+                        ),
+                        'category_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Category ID'
+                        ),
+                        'visibility' => array(
+                            'type' => 'string',
+                            'description' => 'Visibility (internal, public, featured)',
+                            'enum' => array('internal', 'public', 'featured')
+                        ),
+                        'keywords' => array(
+                            'type' => 'string',
+                            'description' => 'Search keywords'
+                        ),
+                        'notes' => array(
+                            'type' => 'string',
+                            'description' => 'Internal notes'
+                        ),
+                        'topic_ids' => array(
+                            'type' => 'array',
+                            'items' => array('type' => 'integer'),
+                            'description' => 'Associated help topic IDs'
+                        )
+                    ),
+                    'required' => array('faq_id')
+                )
+            ),
+            'delete_faq' => array(
+                'name' => 'delete_faq',
+                'description' => 'Delete an FAQ article',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'faq_id' => array(
+                            'type' => 'integer',
+                            'description' => 'FAQ ID'
+                        )
+                    ),
+                    'required' => array('faq_id')
+                )
+            ),
+            // Email Ban List Tools
+            'list_banned_emails' => array(
+                'name' => 'list_banned_emails',
+                'description' => 'List all banned email addresses (admin only)',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'page' => array(
+                            'type' => 'integer',
+                            'description' => 'Page number for pagination (default: 1)',
+                            'default' => 1
+                        ),
+                        'limit' => array(
+                            'type' => 'integer',
+                            'description' => 'Results per page (default: 25, max: 100)',
+                            'default' => 25
+                        )
+                    )
+                )
+            ),
+            'add_banned_email' => array(
+                'name' => 'add_banned_email',
+                'description' => 'Add an email address to the ban list (admin only)',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'email' => array(
+                            'type' => 'string',
+                            'description' => 'Email address to ban'
+                        )
+                    ),
+                    'required' => array('email')
+                )
+            ),
+            'remove_banned_email' => array(
+                'name' => 'remove_banned_email',
+                'description' => 'Remove an email address from the ban list (admin only)',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'email' => array(
+                            'type' => 'string',
+                            'description' => 'Email address to unban'
+                        )
+                    ),
+                    'required' => array('email')
+                )
+            ),
+            'check_banned_email' => array(
+                'name' => 'check_banned_email',
+                'description' => 'Check if an email address is banned',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'email' => array(
+                            'type' => 'string',
+                            'description' => 'Email address to check'
+                        )
+                    ),
+                    'required' => array('email')
+                )
+            ),
+            // Organization Tools
+            'search_organizations' => array(
+                'name' => 'search_organizations',
+                'description' => 'Search organizations with filters',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'q' => array(
+                            'type' => 'string',
+                            'description' => 'Search by organization name'
+                        ),
+                        'domain' => array(
+                            'type' => 'string',
+                            'description' => 'Filter by email domain'
+                        ),
+                        'page' => array(
+                            'type' => 'integer',
+                            'description' => 'Page number for pagination (default: 1)',
+                            'default' => 1
+                        ),
+                        'limit' => array(
+                            'type' => 'integer',
+                            'description' => 'Results per page (default: 25, max: 100)',
+                            'default' => 25
+                        )
+                    )
+                )
+            ),
+            'get_organization' => array(
+                'name' => 'get_organization',
+                'description' => 'Get full details of an organization including members and settings',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'org_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Organization ID'
+                        ),
+                        'include_members' => array(
+                            'type' => 'boolean',
+                            'description' => 'Include list of organization members',
+                            'default' => true
+                        )
+                    ),
+                    'required' => array('org_id')
+                )
+            ),
+            'create_organization' => array(
+                'name' => 'create_organization',
+                'description' => 'Create a new organization',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'name' => array(
+                            'type' => 'string',
+                            'description' => 'Organization name'
+                        ),
+                        'domain' => array(
+                            'type' => 'string',
+                            'description' => 'Email domain(s) for auto-assignment (comma-separated)'
+                        ),
+                        'manager' => array(
+                            'type' => 'string',
+                            'description' => 'Account manager: "s{staff_id}" for staff or "t{team_id}" for team'
+                        ),
+                        'auto_add_members_as_collabs' => array(
+                            'type' => 'boolean',
+                            'description' => 'Auto-add organization members as ticket collaborators',
+                            'default' => false
+                        ),
+                        'auto_add_primary_contacts_as_collabs' => array(
+                            'type' => 'boolean',
+                            'description' => 'Auto-add primary contacts as ticket collaborators',
+                            'default' => false
+                        ),
+                        'auto_assign_account_manager' => array(
+                            'type' => 'boolean',
+                            'description' => 'Auto-assign tickets to account manager',
+                            'default' => false
+                        ),
+                        'sharing' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket sharing: "none", "primary_contacts", or "all_members"',
+                            'enum' => array('none', 'primary_contacts', 'all_members'),
+                            'default' => 'primary_contacts'
+                        )
+                    ),
+                    'required' => array('name')
+                )
+            ),
+            'update_organization' => array(
+                'name' => 'update_organization',
+                'description' => 'Update an existing organization',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'org_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Organization ID'
+                        ),
+                        'name' => array(
+                            'type' => 'string',
+                            'description' => 'Organization name'
+                        ),
+                        'domain' => array(
+                            'type' => 'string',
+                            'description' => 'Email domain(s) for auto-assignment (comma-separated)'
+                        ),
+                        'manager' => array(
+                            'type' => 'string',
+                            'description' => 'Account manager: "s{staff_id}" for staff or "t{team_id}" for team, empty to clear'
+                        ),
+                        'auto_add_members_as_collabs' => array(
+                            'type' => 'boolean',
+                            'description' => 'Auto-add organization members as ticket collaborators'
+                        ),
+                        'auto_add_primary_contacts_as_collabs' => array(
+                            'type' => 'boolean',
+                            'description' => 'Auto-add primary contacts as ticket collaborators'
+                        ),
+                        'auto_assign_account_manager' => array(
+                            'type' => 'boolean',
+                            'description' => 'Auto-assign tickets to account manager'
+                        ),
+                        'sharing' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket sharing: "none", "primary_contacts", or "all_members"',
+                            'enum' => array('none', 'primary_contacts', 'all_members')
+                        )
+                    ),
+                    'required' => array('org_id')
+                )
+            ),
+            'add_user_to_organization' => array(
+                'name' => 'add_user_to_organization',
+                'description' => 'Add an existing user to an organization',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'user_id' => array(
+                            'type' => 'integer',
+                            'description' => 'User ID'
+                        ),
+                        'user_email' => array(
+                            'type' => 'string',
+                            'description' => 'User email (alternative to user_id)'
+                        ),
+                        'org_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Organization ID'
+                        ),
+                        'primary_contact' => array(
+                            'type' => 'boolean',
+                            'description' => 'Set user as primary contact for the organization',
+                            'default' => false
+                        )
+                    ),
+                    'required' => array('org_id')
+                )
+            ),
+            'remove_user_from_organization' => array(
+                'name' => 'remove_user_from_organization',
+                'description' => 'Remove a user from their organization',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'user_id' => array(
+                            'type' => 'integer',
+                            'description' => 'User ID'
+                        ),
+                        'user_email' => array(
+                            'type' => 'string',
+                            'description' => 'User email (alternative to user_id)'
+                        )
+                    )
+                )
             )
         );
     }
@@ -448,6 +833,18 @@ class McpProtocolHandler {
                 'uri' => 'osticket://priorities',
                 'name' => 'Priorities',
                 'description' => 'List of all priority levels',
+                'mimeType' => 'application/json'
+            ),
+            'osticket://faq-categories' => array(
+                'uri' => 'osticket://faq-categories',
+                'name' => 'FAQ Categories',
+                'description' => 'List of all FAQ categories',
+                'mimeType' => 'application/json'
+            ),
+            'osticket://organizations' => array(
+                'uri' => 'osticket://organizations',
+                'name' => 'Organizations',
+                'description' => 'List of all organizations',
                 'mimeType' => 'application/json'
             )
         );
@@ -1192,6 +1589,733 @@ class McpProtocolHandler {
         );
     }
 
+    /**
+     * Search FAQs tool
+     */
+    private function tool_search_faqs($args) {
+        $page = max(1, intval($args['page'] ?? 1));
+        $limit = min(100, max(1, intval($args['limit'] ?? 25)));
+        $offset = ($page - 1) * $limit;
+
+        $faqs = FAQ::objects();
+
+        // Apply filters
+        if (!empty($args['category_id'])) {
+            $faqs->filter(array('category_id' => intval($args['category_id'])));
+        }
+
+        if (!empty($args['visibility'])) {
+            $visibilityMap = array(
+                'internal' => FAQ::VISIBILITY_PRIVATE,
+                'public' => FAQ::VISIBILITY_PUBLIC,
+                'featured' => FAQ::VISIBILITY_FEATURED
+            );
+            if (isset($visibilityMap[$args['visibility']])) {
+                $faqs->filter(array('ispublished' => $visibilityMap[$args['visibility']]));
+            }
+        }
+
+        // Full-text search
+        if (!empty($args['q'])) {
+            $q = $args['q'];
+            $faqs->filter(Q::any(array(
+                'question__contains' => $q,
+                'answer__contains' => $q,
+                'keywords__contains' => $q
+            )));
+        }
+
+        $faqs->order_by('question');
+
+        $total = $faqs->count();
+        $faqs->limit($limit)->offset($offset);
+
+        $results = array();
+        foreach ($faqs as $faq) {
+            $results[] = $this->formatFaqSummary($faq);
+        }
+
+        return array(
+            'faqs' => $results,
+            'pagination' => array(
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'pages' => ceil($total / $limit)
+            )
+        );
+    }
+
+    /**
+     * Get FAQ details tool
+     */
+    private function tool_get_faq($args) {
+        if (empty($args['faq_id'])) {
+            throw new McpException(-32602, 'Missing required field: faq_id');
+        }
+
+        $faq = FAQ::lookup(intval($args['faq_id']));
+        if (!$faq) {
+            throw new McpException(-32602, 'FAQ not found');
+        }
+
+        return $this->formatFaqFull($faq);
+    }
+
+    /**
+     * Create FAQ tool
+     */
+    private function tool_create_faq($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
+        }
+
+        // Validate required fields
+        foreach (array('question', 'answer', 'category_id') as $field) {
+            if (empty($args[$field])) {
+                throw new McpException(-32602, "Missing required field: {$field}");
+            }
+        }
+
+        // Validate category exists
+        $category = Category::lookup(intval($args['category_id']));
+        if (!$category) {
+            throw new McpException(-32602, 'Invalid category_id');
+        }
+
+        // Map visibility
+        $visibilityMap = array(
+            'internal' => FAQ::VISIBILITY_PRIVATE,
+            'public' => FAQ::VISIBILITY_PUBLIC,
+            'featured' => FAQ::VISIBILITY_FEATURED
+        );
+        $visibility = $visibilityMap[$args['visibility'] ?? 'internal'] ?? FAQ::VISIBILITY_PRIVATE;
+
+        // Create FAQ
+        $faq = FAQ::create();
+        $vars = array(
+            'question' => $args['question'],
+            'answer' => $args['answer'],
+            'category_id' => intval($args['category_id']),
+            'ispublished' => $visibility,
+            'keywords' => $args['keywords'] ?? '',
+            'notes' => $args['notes'] ?? '',
+            'topics' => $args['topic_ids'] ?? array()
+        );
+
+        $errors = array();
+        if (!$faq->update($vars, $errors)) {
+            $errorMsg = is_array($errors) ? implode(', ', array_filter($errors)) : 'Unknown error';
+            throw new McpException(-32602, "Failed to create FAQ: {$errorMsg}");
+        }
+
+        return array(
+            'success' => true,
+            'faq' => $this->formatFaqSummary($faq)
+        );
+    }
+
+    /**
+     * Update FAQ tool
+     */
+    private function tool_update_faq($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
+        }
+
+        if (empty($args['faq_id'])) {
+            throw new McpException(-32602, 'Missing required field: faq_id');
+        }
+
+        $faq = FAQ::lookup(intval($args['faq_id']));
+        if (!$faq) {
+            throw new McpException(-32602, 'FAQ not found');
+        }
+
+        // Build update vars - only include provided fields
+        $vars = array(
+            'id' => $faq->getId(),
+            'question' => $args['question'] ?? $faq->getQuestion(),
+            'answer' => $args['answer'] ?? $faq->getAnswer(),
+            'category_id' => isset($args['category_id']) ? intval($args['category_id']) : $faq->getCategoryId(),
+            'keywords' => $args['keywords'] ?? $faq->getKeywords(),
+            'notes' => $args['notes'] ?? $faq->getNotes()
+        );
+
+        // Handle visibility
+        if (isset($args['visibility'])) {
+            $visibilityMap = array(
+                'internal' => FAQ::VISIBILITY_PRIVATE,
+                'public' => FAQ::VISIBILITY_PUBLIC,
+                'featured' => FAQ::VISIBILITY_FEATURED
+            );
+            $vars['ispublished'] = $visibilityMap[$args['visibility']] ?? $faq->ispublished;
+        } else {
+            $vars['ispublished'] = $faq->ispublished;
+        }
+
+        // Handle topics
+        if (isset($args['topic_ids'])) {
+            $vars['topics'] = $args['topic_ids'];
+        } else {
+            $vars['topics'] = $faq->getHelpTopicsIds();
+        }
+
+        // Validate category if changed
+        if (isset($args['category_id'])) {
+            $category = Category::lookup(intval($args['category_id']));
+            if (!$category) {
+                throw new McpException(-32602, 'Invalid category_id');
+            }
+        }
+
+        $errors = array();
+        if (!$faq->update($vars, $errors)) {
+            $errorMsg = is_array($errors) ? implode(', ', array_filter($errors)) : 'Unknown error';
+            throw new McpException(-32602, "Failed to update FAQ: {$errorMsg}");
+        }
+
+        return array(
+            'success' => true,
+            'faq' => $this->formatFaqSummary($faq)
+        );
+    }
+
+    /**
+     * Delete FAQ tool
+     */
+    private function tool_delete_faq($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
+        }
+
+        if (empty($args['faq_id'])) {
+            throw new McpException(-32602, 'Missing required field: faq_id');
+        }
+
+        $faq = FAQ::lookup(intval($args['faq_id']));
+        if (!$faq) {
+            throw new McpException(-32602, 'FAQ not found');
+        }
+
+        $faqId = $faq->getId();
+        $question = $faq->getQuestion();
+
+        if (!$faq->delete()) {
+            throw new McpException(-32602, 'Failed to delete FAQ');
+        }
+
+        return array(
+            'success' => true,
+            'deleted' => array(
+                'id' => $faqId,
+                'question' => $question
+            )
+        );
+    }
+
+    /**
+     * List banned emails tool
+     */
+    private function tool_list_banned_emails($args) {
+        // Admin only
+        if (!$this->staff->isAdmin()) {
+            throw new McpException(-32602, 'Permission denied: Admin access required');
+        }
+
+        $page = max(1, intval($args['page'] ?? 1));
+        $limit = min(100, max(1, intval($args['limit'] ?? 25)));
+        $offset = ($page - 1) * $limit;
+
+        $filter = Banlist::getSystemBanList();
+        if (!$filter) {
+            return array(
+                'banned_emails' => array(),
+                'pagination' => array(
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total' => 0,
+                    'pages' => 0
+                )
+            );
+        }
+
+        // Get rules where what='email'
+        $rules = $filter->rules->filter(array('what' => 'email', 'isactive' => 1));
+        $total = $rules->count();
+
+        $rules->limit($limit)->offset($offset);
+
+        $results = array();
+        foreach ($rules as $rule) {
+            $results[] = array(
+                'id' => $rule->getId(),
+                'email' => $rule->val,
+                'how' => $rule->how
+            );
+        }
+
+        return array(
+            'banned_emails' => $results,
+            'pagination' => array(
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'pages' => ceil($total / $limit)
+            )
+        );
+    }
+
+    /**
+     * Add banned email tool
+     */
+    private function tool_add_banned_email($args) {
+        // Admin only
+        if (!$this->staff->isAdmin()) {
+            throw new McpException(-32602, 'Permission denied: Admin access required');
+        }
+
+        if (empty($args['email'])) {
+            throw new McpException(-32602, 'Missing required field: email');
+        }
+
+        $email = trim($args['email']);
+
+        // Validate email format
+        if (!Validator::is_email($email)) {
+            throw new McpException(-32602, 'Invalid email address format');
+        }
+
+        // Check if already banned
+        if (Banlist::includes($email)) {
+            throw new McpException(-32602, 'Email address is already banned');
+        }
+
+        $result = Banlist::add($email);
+        if (!$result) {
+            throw new McpException(-32602, 'Failed to add email to ban list');
+        }
+
+        return array(
+            'success' => true,
+            'email' => $email,
+            'message' => 'Email address has been banned'
+        );
+    }
+
+    /**
+     * Remove banned email tool
+     */
+    private function tool_remove_banned_email($args) {
+        // Admin only
+        if (!$this->staff->isAdmin()) {
+            throw new McpException(-32602, 'Permission denied: Admin access required');
+        }
+
+        if (empty($args['email'])) {
+            throw new McpException(-32602, 'Missing required field: email');
+        }
+
+        $email = trim($args['email']);
+
+        // Check if actually banned
+        if (!Banlist::includes($email)) {
+            throw new McpException(-32602, 'Email address is not in the ban list');
+        }
+
+        $result = Banlist::remove($email);
+        if (!$result) {
+            throw new McpException(-32602, 'Failed to remove email from ban list');
+        }
+
+        return array(
+            'success' => true,
+            'email' => $email,
+            'message' => 'Email address has been unbanned'
+        );
+    }
+
+    /**
+     * Check banned email tool
+     */
+    private function tool_check_banned_email($args) {
+        if (empty($args['email'])) {
+            throw new McpException(-32602, 'Missing required field: email');
+        }
+
+        $email = trim($args['email']);
+        $banned = Banlist::includes($email);
+
+        return array(
+            'email' => $email,
+            'banned' => (bool) $banned
+        );
+    }
+
+    /**
+     * Search organizations tool
+     */
+    private function tool_search_organizations($args) {
+        $page = max(1, intval($args['page'] ?? 1));
+        $limit = min(100, max(1, intval($args['limit'] ?? 25)));
+        $offset = ($page - 1) * $limit;
+
+        $orgs = Organization::objects();
+
+        // Apply filters
+        if (!empty($args['q'])) {
+            $orgs->filter(array('name__contains' => $args['q']));
+        }
+
+        if (!empty($args['domain'])) {
+            $orgs->filter(array('domain__contains' => $args['domain']));
+        }
+
+        $orgs->order_by('name');
+
+        $total = $orgs->count();
+        $orgs->limit($limit)->offset($offset);
+
+        $results = array();
+        foreach ($orgs as $org) {
+            $results[] = $this->formatOrganizationSummary($org);
+        }
+
+        return array(
+            'organizations' => $results,
+            'pagination' => array(
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'pages' => ceil($total / $limit)
+            )
+        );
+    }
+
+    /**
+     * Get organization details tool
+     */
+    private function tool_get_organization($args) {
+        if (empty($args['org_id'])) {
+            throw new McpException(-32602, 'Missing required field: org_id');
+        }
+
+        $org = Organization::lookup(intval($args['org_id']));
+        if (!$org) {
+            throw new McpException(-32602, 'Organization not found');
+        }
+
+        $includeMembers = $args['include_members'] ?? true;
+        return $this->formatOrganizationFull($org, $includeMembers);
+    }
+
+    /**
+     * Create organization tool
+     */
+    private function tool_create_organization($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(OrganizationModel::PERM_CREATE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot create organizations');
+        }
+
+        if (empty($args['name'])) {
+            throw new McpException(-32602, 'Missing required field: name');
+        }
+
+        // Check if organization name already exists
+        if (Organization::lookup(array('name' => $args['name']))) {
+            throw new McpException(-32602, 'Organization with this name already exists');
+        }
+
+        // Build status flags
+        $status = Organization::SHARE_PRIMARY_CONTACT; // Default sharing
+
+        if (!empty($args['auto_add_members_as_collabs'])) {
+            $status |= Organization::COLLAB_ALL_MEMBERS;
+        }
+        if (!empty($args['auto_add_primary_contacts_as_collabs'])) {
+            $status |= Organization::COLLAB_PRIMARY_CONTACT;
+        }
+        if (!empty($args['auto_assign_account_manager'])) {
+            $status |= Organization::ASSIGN_AGENT_MANAGER;
+        }
+
+        // Handle sharing setting
+        if (isset($args['sharing'])) {
+            // Clear default sharing flags first
+            $status &= ~(Organization::SHARE_PRIMARY_CONTACT | Organization::SHARE_EVERYBODY);
+            switch ($args['sharing']) {
+                case 'primary_contacts':
+                    $status |= Organization::SHARE_PRIMARY_CONTACT;
+                    break;
+                case 'all_members':
+                    $status |= Organization::SHARE_EVERYBODY;
+                    break;
+                // 'none' leaves both flags cleared
+            }
+        }
+
+        // Validate manager if provided
+        if (!empty($args['manager'])) {
+            $manager = $args['manager'];
+            if ($manager[0] === 's') {
+                if (!Staff::lookup(substr($manager, 1))) {
+                    throw new McpException(-32602, 'Invalid staff ID in manager field');
+                }
+            } elseif ($manager[0] === 't') {
+                if (!Team::lookup(substr($manager, 1))) {
+                    throw new McpException(-32602, 'Invalid team ID in manager field');
+                }
+            } else {
+                throw new McpException(-32602, 'Manager must be "s{staff_id}" or "t{team_id}"');
+            }
+        }
+
+        $org = Organization::create(array(
+            'name' => $args['name'],
+            'domain' => $args['domain'] ?? '',
+            'manager' => $args['manager'] ?? '',
+            'status' => $status
+        ));
+
+        if (!$org->save(true)) {
+            throw new McpException(-32602, 'Failed to create organization');
+        }
+
+        // Add dynamic data
+        $org->addDynamicData(array('name' => $args['name']));
+
+        return array(
+            'success' => true,
+            'organization' => $this->formatOrganizationSummary($org)
+        );
+    }
+
+    /**
+     * Update organization tool
+     */
+    private function tool_update_organization($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
+            throw new McpException(-32602, 'Permission denied: Cannot edit organizations');
+        }
+
+        if (empty($args['org_id'])) {
+            throw new McpException(-32602, 'Missing required field: org_id');
+        }
+
+        $org = Organization::lookup(intval($args['org_id']));
+        if (!$org) {
+            throw new McpException(-32602, 'Organization not found');
+        }
+
+        // Check if name is being changed and if it's unique
+        if (isset($args['name']) && $args['name'] !== $org->getName()) {
+            if (Organization::lookup(array('name' => $args['name']))) {
+                throw new McpException(-32602, 'Organization with this name already exists');
+            }
+            $org->name = $args['name'];
+        }
+
+        // Update domain if provided
+        if (isset($args['domain'])) {
+            $org->domain = $args['domain'];
+        }
+
+        // Update manager if provided
+        if (isset($args['manager'])) {
+            if ($args['manager'] === '' || $args['manager'] === null) {
+                $org->manager = '';
+            } else {
+                $manager = $args['manager'];
+                if ($manager[0] === 's') {
+                    if (!Staff::lookup(substr($manager, 1))) {
+                        throw new McpException(-32602, 'Invalid staff ID in manager field');
+                    }
+                } elseif ($manager[0] === 't') {
+                    if (!Team::lookup(substr($manager, 1))) {
+                        throw new McpException(-32602, 'Invalid team ID in manager field');
+                    }
+                } else {
+                    throw new McpException(-32602, 'Manager must be "s{staff_id}" or "t{team_id}"');
+                }
+                $org->manager = $manager;
+            }
+        }
+
+        // Update flags - need to modify status directly since setStatus/clearStatus are protected
+        $status = $org->status;
+
+        if (isset($args['auto_add_members_as_collabs'])) {
+            if ($args['auto_add_members_as_collabs']) {
+                $status |= Organization::COLLAB_ALL_MEMBERS;
+            } else {
+                $status &= ~Organization::COLLAB_ALL_MEMBERS;
+            }
+        }
+
+        if (isset($args['auto_add_primary_contacts_as_collabs'])) {
+            if ($args['auto_add_primary_contacts_as_collabs']) {
+                $status |= Organization::COLLAB_PRIMARY_CONTACT;
+            } else {
+                $status &= ~Organization::COLLAB_PRIMARY_CONTACT;
+            }
+        }
+
+        if (isset($args['auto_assign_account_manager'])) {
+            if ($args['auto_assign_account_manager']) {
+                $status |= Organization::ASSIGN_AGENT_MANAGER;
+            } else {
+                $status &= ~Organization::ASSIGN_AGENT_MANAGER;
+            }
+        }
+
+        if (isset($args['sharing'])) {
+            // Clear sharing flags first
+            $status &= ~(Organization::SHARE_PRIMARY_CONTACT | Organization::SHARE_EVERYBODY);
+
+            switch ($args['sharing']) {
+                case 'primary_contacts':
+                    $status |= Organization::SHARE_PRIMARY_CONTACT;
+                    break;
+                case 'all_members':
+                    $status |= Organization::SHARE_EVERYBODY;
+                    break;
+            }
+        }
+
+        $org->status = $status;
+
+        if (!$org->save()) {
+            throw new McpException(-32602, 'Failed to update organization');
+        }
+
+        return array(
+            'success' => true,
+            'organization' => $this->formatOrganizationSummary($org)
+        );
+    }
+
+    /**
+     * Add user to organization tool
+     */
+    private function tool_add_user_to_organization($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
+            throw new McpException(-32602, 'Permission denied: Cannot edit organizations');
+        }
+
+        if (empty($args['org_id'])) {
+            throw new McpException(-32602, 'Missing required field: org_id');
+        }
+
+        if (empty($args['user_id']) && empty($args['user_email'])) {
+            throw new McpException(-32602, 'Must specify user_id or user_email');
+        }
+
+        $org = Organization::lookup(intval($args['org_id']));
+        if (!$org) {
+            throw new McpException(-32602, 'Organization not found');
+        }
+
+        // Find user
+        $user = null;
+        if (!empty($args['user_id'])) {
+            $user = User::lookup(intval($args['user_id']));
+        } elseif (!empty($args['user_email'])) {
+            $user = User::lookupByEmail($args['user_email']);
+        }
+
+        if (!$user) {
+            throw new McpException(-32602, 'User not found');
+        }
+
+        // Check if user is already in this organization
+        if ($user->getOrgId() == $org->getId()) {
+            throw new McpException(-32602, 'User is already a member of this organization');
+        }
+
+        // Set organization
+        if (!$user->setOrganization($org)) {
+            throw new McpException(-32602, 'Failed to add user to organization');
+        }
+
+        // Set as primary contact if requested
+        if (!empty($args['primary_contact'])) {
+            $user->setPrimaryContact(true);
+            $user->save();
+        }
+
+        return array(
+            'success' => true,
+            'user' => array(
+                'id' => $user->getId(),
+                'name' => (string) $user->getName(),
+                'email' => $user->getEmail()
+            ),
+            'organization' => array(
+                'id' => $org->getId(),
+                'name' => $org->getName()
+            ),
+            'primary_contact' => !empty($args['primary_contact'])
+        );
+    }
+
+    /**
+     * Remove user from organization tool
+     */
+    private function tool_remove_user_from_organization($args) {
+        // Check permission
+        if (!$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
+            throw new McpException(-32602, 'Permission denied: Cannot edit organizations');
+        }
+
+        if (empty($args['user_id']) && empty($args['user_email'])) {
+            throw new McpException(-32602, 'Must specify user_id or user_email');
+        }
+
+        // Find user
+        $user = null;
+        if (!empty($args['user_id'])) {
+            $user = User::lookup(intval($args['user_id']));
+        } elseif (!empty($args['user_email'])) {
+            $user = User::lookupByEmail($args['user_email']);
+        }
+
+        if (!$user) {
+            throw new McpException(-32602, 'User not found');
+        }
+
+        $org = $user->getOrganization();
+        if (!$org) {
+            throw new McpException(-32602, 'User is not a member of any organization');
+        }
+
+        $orgName = $org->getName();
+        $orgId = $org->getId();
+
+        // Remove from organization
+        if (!$org->removeUser($user)) {
+            throw new McpException(-32602, 'Failed to remove user from organization');
+        }
+
+        return array(
+            'success' => true,
+            'user' => array(
+                'id' => $user->getId(),
+                'name' => (string) $user->getName(),
+                'email' => $user->getEmail()
+            ),
+            'removed_from' => array(
+                'id' => $orgId,
+                'name' => $orgName
+            )
+        );
+    }
+
     // =========================================================================
     // Resource Implementations
     // =========================================================================
@@ -1294,6 +2418,42 @@ class McpProtocolHandler {
             );
         }
         return array('priorities' => $priorities);
+    }
+
+    /**
+     * FAQ Categories resource
+     */
+    private function resource_faq_categories() {
+        $categories = array();
+        foreach (Category::objects() as $cat) {
+            $visibilityMap = array(
+                Category::VISIBILITY_PRIVATE => 'private',
+                Category::VISIBILITY_PUBLIC => 'public',
+                Category::VISIBILITY_FEATURED => 'featured'
+            );
+            $categories[] = array(
+                'id' => $cat->getId(),
+                'name' => $cat->getName(),
+                'description' => $cat->getDescription(),
+                'visibility' => $visibilityMap[$cat->ispublic] ?? 'private',
+                'parent_id' => $cat->category_pid ?: null,
+                'faq_count' => $cat->getNumFAQs(true),
+                'created' => $cat->getCreateDate(),
+                'updated' => $cat->getUpdateDate()
+            );
+        }
+        return array('categories' => $categories);
+    }
+
+    /**
+     * Organizations resource
+     */
+    private function resource_organizations() {
+        $orgs = array();
+        foreach (Organization::objects() as $org) {
+            $orgs[] = $this->formatOrganizationSummary($org);
+        }
+        return array('organizations' => $orgs);
     }
 
     // =========================================================================
@@ -1495,6 +2655,136 @@ class McpProtocolHandler {
             'duedate' => $task->getDueDate(),
             'closed' => $task->getCloseDate()
         );
+    }
+
+    /**
+     * Format FAQ for summary list
+     */
+    private function formatFaqSummary($faq) {
+        $visibilityMap = array(
+            FAQ::VISIBILITY_PRIVATE => 'internal',
+            FAQ::VISIBILITY_PUBLIC => 'public',
+            FAQ::VISIBILITY_FEATURED => 'featured'
+        );
+        return array(
+            'id' => $faq->getId(),
+            'question' => $faq->getQuestion(),
+            'teaser' => $faq->getTeaser(),
+            'visibility' => $visibilityMap[$faq->ispublished] ?? 'internal',
+            'category' => array(
+                'id' => $faq->getCategoryId(),
+                'name' => $faq->getCategory() ? $faq->getCategory()->getName() : null
+            ),
+            'created' => $faq->getCreateDate(),
+            'updated' => $faq->getUpdateDate()
+        );
+    }
+
+    /**
+     * Format FAQ with full details
+     */
+    private function formatFaqFull($faq) {
+        $data = $this->formatFaqSummary($faq);
+
+        // Add full content
+        $data['answer'] = $faq->getAnswer();
+        $data['keywords'] = $faq->getKeywords();
+        $data['notes'] = $faq->getNotes();
+
+        // Add help topics
+        $data['help_topics'] = array();
+        foreach ($faq->getHelpTopics() as $ft) {
+            if ($ft->topic) {
+                $data['help_topics'][] = array(
+                    'id' => $ft->topic->getId(),
+                    'name' => $ft->topic->getName()
+                );
+            }
+        }
+
+        // Add attachment count
+        $data['attachment_count'] = $faq->getNumAttachments();
+
+        return $data;
+    }
+
+    /**
+     * Format organization for summary list
+     */
+    private function formatOrganizationSummary($org) {
+        // Determine sharing mode
+        $sharing = 'none';
+        if ($org->shareWithEverybody()) {
+            $sharing = 'all_members';
+        } elseif ($org->shareWithPrimaryContacts()) {
+            $sharing = 'primary_contacts';
+        }
+
+        return array(
+            'id' => $org->getId(),
+            'name' => $org->getName(),
+            'domain' => $org->domain ?: null,
+            'member_count' => $org->getNumUsers(),
+            'manager' => $this->formatAccountManager($org),
+            'sharing' => $sharing,
+            'created' => $org->getCreateDate(),
+            'updated' => $org->getUpdateDate()
+        );
+    }
+
+    /**
+     * Format organization with full details
+     */
+    private function formatOrganizationFull($org, $includeMembers = true) {
+        $data = $this->formatOrganizationSummary($org);
+
+        // Add settings
+        $data['settings'] = array(
+            'auto_add_members_as_collabs' => $org->autoAddMembersAsCollabs(),
+            'auto_add_primary_contacts_as_collabs' => $org->autoAddPrimaryContactsAsCollabs(),
+            'auto_assign_account_manager' => $org->autoAssignAccountManager()
+        );
+
+        // Add members if requested
+        if ($includeMembers) {
+            $data['members'] = array();
+            foreach ($org->allMembers() as $user) {
+                $data['members'][] = array(
+                    'id' => $user->getId(),
+                    'name' => (string) $user->getName(),
+                    'email' => $user->getEmail(),
+                    'primary_contact' => $user->isPrimaryContact()
+                );
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Format account manager (staff or team)
+     */
+    private function formatAccountManager($org) {
+        $manager = $org->getAccountManager();
+        if (!$manager) {
+            return null;
+        }
+
+        if ($manager instanceof Staff) {
+            return array(
+                'type' => 'staff',
+                'id' => $manager->getId(),
+                'name' => (string) $manager->getName()
+            );
+        } elseif ($manager instanceof Team) {
+            return array(
+                'type' => 'team',
+                'id' => $manager->getId(),
+                'name' => $manager->getName()
+            );
+        }
+
+        return null;
     }
 }
 
