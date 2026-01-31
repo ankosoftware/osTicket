@@ -50,17 +50,6 @@ if ($thisclient && $thisclient->isGuest()
                 <a class="action-button" href="tickets.php?a=edit&id=<?php
                      echo $ticket->getId(); ?>"><i class="icon-edit"></i> <?php echo __('Edit'); ?></a>
 <?php } ?>
-<?php if ($cfg->allowClientClose()
-        && !$ticket->isClosed()
-        && $thisclient->getId() == $ticket->getUserId()) { ?>
-                <form action="tickets.php?id=<?php echo $ticket->getId(); ?>" method="post" style="display:inline;">
-                    <?php echo csrf_token(); ?>
-                    <input type="hidden" name="a" value="close">
-                    <button type="submit" class="action-button" onclick="return confirm('<?php echo __('Are you sure you want to close this ticket?'); ?>');">
-                        <i class="icon-ok-circle"></i> <?php echo __('Close'); ?>
-                    </button>
-                </form>
-<?php } ?>
 </div>
             </h1>
         </td>
@@ -203,6 +192,12 @@ echo $attrs; ?>><?php echo $draft ?: $info['message'];
 <?php } ?>
     <p style="text-align:center">
         <input type="submit" value="<?php echo __('Post Reply');?>">
+<?php if ($cfg->allowClientClose()
+        && !$ticket->isClosed()
+        && $thisclient->getId() == $ticket->getUserId()) { ?>
+        <input type="submit" name="close_on_reply" value="<?php echo __('Post Reply and Close');?>"
+            onclick="return confirm('<?php echo __('Are you sure you want to close this ticket?'); ?>');">
+<?php } ?>
         <input type="reset" value="<?php echo __('Reset');?>">
         <input type="button" value="<?php echo __('Cancel');?>" onClick="history.go(-1)">
     </p>

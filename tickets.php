@@ -93,6 +93,18 @@ if ($_POST && is_object($ticket) && $ticket->getId()) {
 
             if(($msgid=$ticket->postMessage($vars, 'Web'))) {
                 $msg=__('Message Posted Successfully');
+                // Handle close on reply if requested
+                if (isset($_POST['close_on_reply'])
+                        && $cfg->allowClientClose()
+                        && !$ticket->isClosed()
+                        && $thisclient->getId() == $ticket->getUserId()) {
+                    $errors_arr = array();
+                    if ($ticket->setStatus('closed', '', $errors_arr, false)) {
+                        $msg = __('Message posted and ticket closed successfully');
+                    } else {
+                        $errors['err'] = $errors_arr['err'] ?: __('Message posted but unable to close ticket');
+                    }
+                }
                 // Cleanup drafts for the ticket. If not closed, only clean
                 // for this staff. Else clean all drafts for the ticket.
                 Draft::deleteForNamespace('ticket.client.' . $ticket->getId());
