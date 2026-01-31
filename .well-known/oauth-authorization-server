@@ -1,0 +1,45 @@
+<?php
+/*********************************************************************
+    oauth-authorization-server
+
+    OAuth 2.0 Authorization Server Metadata (RFC8414) for MCP authentication.
+
+    Copyright (c) 2025 osTicket
+    http://www.osticket.com
+
+    Released under the GNU General Public License WITHOUT ANY WARRANTY.
+    See LICENSE.TXT for details.
+**********************************************************************/
+
+// Bootstrap osTicket
+require_once __DIR__ . '/../main.inc.php';
+
+// Get base URL
+function getBaseUrl() {
+    global $cfg;
+    $baseUrl = $cfg ? $cfg->getBaseUrl() : '';
+    if (!$baseUrl) {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $baseUrl = "{$scheme}://{$host}";
+    }
+    return rtrim($baseUrl, '/');
+}
+
+$baseUrl = getBaseUrl();
+
+$metadata = array(
+    'issuer' => $baseUrl,
+    'token_endpoint' => $baseUrl . '/api/oauth/token',
+    'token_endpoint_auth_methods_supported' => array('client_secret_basic', 'client_secret_post'),
+    'grant_types_supported' => array('client_credentials'),
+    'scopes_supported' => array('mcp:full'),
+    'response_types_supported' => array('token'),
+    'service_documentation' => $baseUrl . '/api/',
+    'code_challenge_methods_supported' => array('S256'),
+);
+
+header('Content-Type: application/json');
+header('Cache-Control: public, max-age=3600');
+header('Access-Control-Allow-Origin: *');
+echo json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);

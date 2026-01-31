@@ -18,13 +18,47 @@
 
 include_once INCLUDE_DIR.'class.api.php';
 include_once INCLUDE_DIR.'class.mcp.php';
+include_once API_DIR.'api.oauth.php';
 
 class McpApiController extends ApiController {
 
     private $staff;
 
     /**
-     * Authenticate using HTTP Basic Auth with staff credentials
+     * Get the base URL for OAuth endpoints
+     */
+    private function getBaseUrl() {
+        global $cfg;
+
+        $baseUrl = $cfg ? $cfg->getBaseUrl() : '';
+        if (!$baseUrl) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $baseUrl = "{$scheme}://{$host}";
+        }
+
+        return rtrim($baseUrl, '/');
+    }
+
+    /**
+     * Get the resource metadata URL for WWW-Authenticate header
+     * Points to root .well-known path per RFC9728
+     */
+    private function getResourceMetadataUrl() {
+        return $this->getBaseUrl() . '/.well-known/oauth-protected-resource';
+    }
+
+    /**
+     * Authenticate using HTTP Basic Auth or JWT Bearer token
+     *
+     * Supports:
+     * - Basic auth: Authorization: Basic base64(username:password)
+     * - Bearer token: Authorization: Bearer <JWT> (from /api/oauth/token)
+     *
+     * JWT tokens are validated for:
+     * - Valid HMAC-SHA256 signature
+     * - Expiration time
+     * - Audience (must match this MCP server URL)
      *
      * @return Staff|false The authenticated staff member or false on failure
      */
@@ -42,39 +76,56 @@ class McpApiController extends ApiController {
             }
         }
 
-        if (!$auth || stripos($auth, 'Basic ') !== 0) {
+        if (!$auth) {
             return false;
         }
 
-        // Decode credentials
-        $credentials = base64_decode(substr($auth, 6));
-        if (!$credentials || strpos($credentials, ':') === false) {
-            return false;
+        // Support both Basic auth and JWT Bearer tokens
+        if (stripos($auth, 'Basic ') === 0) {
+            // Basic auth: decode credentials and verify password
+            $credentials = base64_decode(substr($auth, 6));
+            if (!$credentials || strpos($credentials, ':') === false) {
+                return false;
+            }
+
+            list($username, $password) = explode(':', $credentials, 2);
+            if (!$username || !$password) {
+                return false;
+            }
+
+            $staff = StaffSession::lookup($username);
+            if (!$staff || !$staff->check_passwd($password, false) || !$staff->isActive()) {
+                return false;
+            }
+
+            return $staff;
+
+        } elseif (stripos($auth, 'Bearer ') === 0) {
+            // Bearer token: validate JWT and lookup staff
+            $token = substr($auth, 7);
+
+            // Validate JWT token with audience check
+            $expectedAudience = $this->getBaseUrl() . '/api/mcp.json';
+            $payload = OAuthApiController::validateToken($token, $expectedAudience);
+
+            if (!$payload) {
+                return false;
+            }
+
+            // Lookup staff by ID from token
+            if (!isset($payload['staff_id'])) {
+                return false;
+            }
+
+            $staff = Staff::lookup($payload['staff_id']);
+            if (!$staff || !$staff->isActive()) {
+                return false;
+            }
+
+            return $staff;
         }
 
-        list($username, $password) = explode(':', $credentials, 2);
-
-        if (!$username || !$password) {
-            return false;
-        }
-
-        // Lookup staff by username
-        $staff = StaffSession::lookup($username);
-        if (!$staff) {
-            return false;
-        }
-
-        // Verify password
-        if (!$staff->check_passwd($password, false)) {
-            return false;
-        }
-
-        // Check if staff is active
-        if (!$staff->isActive()) {
-            return false;
-        }
-
-        return $staff;
+        return false;
     }
 
     /**
@@ -84,7 +135,7 @@ class McpApiController extends ApiController {
         // Authenticate
         $this->staff = $this->authenticate();
         if (!$this->staff) {
-            $this->sendJsonRpcError(null, -32001, 'Authentication required', 401);
+            $this->sendAuthenticationRequired();
             return;
         }
 
@@ -145,6 +196,29 @@ class McpApiController extends ApiController {
                 'Internal error: ' . $e->getMessage()
             );
         }
+    }
+
+    /**
+     * Send 401 Unauthorized with WWW-Authenticate header per MCP/OAuth spec (RFC9728)
+     */
+    protected function sendAuthenticationRequired() {
+        $resourceMetadata = $this->getResourceMetadataUrl();
+
+        http_response_code(401);
+        header('WWW-Authenticate: Bearer resource_metadata="' . $resourceMetadata . '", scope="mcp:full"');
+        header('Content-Type: application/json; charset=UTF-8');
+
+        $response = array(
+            'jsonrpc' => '2.0',
+            'id' => null,
+            'error' => array(
+                'code' => -32001,
+                'message' => 'Authentication required'
+            )
+        );
+
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 
     /**

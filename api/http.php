@@ -21,7 +21,11 @@ $dispatcher = patterns('',
         url('^/tasks/', patterns('',
                 url_post("^cron$", array('api.cron.php:CronApiController', 'execute'))
          )),
-        url_post("^/mcp\.json$", array('api.mcp.php:McpApiController', 'handle'))
+        url_post("^/mcp\.json$", array('api.mcp.php:McpApiController', 'handle')),
+        // OAuth 2.1 endpoints for MCP authentication (RFC9728, RFC8414)
+        url_get("^/\.well-known/oauth-protected-resource$", array('api.oauth.php:OAuthApiController', 'protectedResourceMetadata')),
+        url_get("^/\.well-known/oauth-authorization-server$", array('api.oauth.php:OAuthApiController', 'authorizationServerMetadata')),
+        url_post("^/oauth/token$", array('api.oauth.php:OAuthApiController', 'token'))
         );
 
 // Send api signal so backend can register endpoints

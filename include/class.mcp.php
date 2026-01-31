@@ -81,6 +81,14 @@ class McpProtocolHandler {
                             'type' => 'string',
                             'description' => 'Filter tickets created before this date (YYYY-MM-DD)'
                         ),
+                        'updated_after' => array(
+                            'type' => 'string',
+                            'description' => 'Filter tickets last updated after this date (YYYY-MM-DD)'
+                        ),
+                        'updated_before' => array(
+                            'type' => 'string',
+                            'description' => 'Filter tickets last updated before this date (YYYY-MM-DD)'
+                        ),
                         'page' => array(
                             'type' => 'integer',
                             'description' => 'Page number for pagination (default: 1)',
@@ -1236,6 +1244,14 @@ class McpProtocolHandler {
 
         if (!empty($args['created_before'])) {
             $tickets->filter(array('created__lte' => $args['created_before']));
+        }
+
+        if (!empty($args['updated_after'])) {
+            $tickets->filter(array('lastupdate__gte' => $args['updated_after']));
+        }
+
+        if (!empty($args['updated_before'])) {
+            $tickets->filter(array('lastupdate__lte' => $args['updated_before']));
         }
 
         // Full-text search
@@ -3282,10 +3298,12 @@ class McpProtocolHandler {
      */
     private function formatAttachment($att) {
         $file = $att->getFile();
+        // Get filename safely - getFilename() may fail if name is empty and file is null
+        $filename = $att->name ?: ($file ? $file->name : 'unknown');
         return array(
             'id' => $att->getId(),
             'file_id' => $att->getFileId(),
-            'filename' => $att->getFilename(),
+            'filename' => $filename,
             'size' => $file ? $file->getSize() : null,
             'type' => $file ? $file->getType() : null,
             'inline' => (bool) $att->inline,
