@@ -189,14 +189,5 @@ class McpApiController extends ApiController {
         echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
-
-    /**
-     * Override parent's error handler
-     */
-    public function onError($code, $error, $title = null, $logOnly = false) {
-        if (!$logOnly) {
-            $this->sendJsonRpcError(null, -32000, $error, $code);
-        }
-    }
 }
 ?>
