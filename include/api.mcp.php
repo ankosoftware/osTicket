@@ -18,7 +18,7 @@
 
 include_once INCLUDE_DIR.'class.api.php';
 include_once INCLUDE_DIR.'class.mcp.php';
-include_once API_DIR.'api.oauth.php';
+include_once ROOT_DIR.'api/api.oauth.php';
 
 class McpApiController extends ApiController {
 
