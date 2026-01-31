@@ -1142,8 +1142,8 @@ class McpProtocolHandler {
      * Create ticket tool
      */
     private function tool_create_ticket($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(Ticket::PERM_CREATE)) {
+        // Check permission - admins can always create tickets
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(Ticket::PERM_CREATE)) {
             throw new McpException(-32602, 'Permission denied: Cannot create tickets');
         }
 
@@ -1205,9 +1205,9 @@ class McpProtocolHandler {
     private function tool_reply_to_ticket($args) {
         $ticket = $this->resolveTicket($args);
 
-        // Check permission
+        // Check permission - admins can always reply
         $role = $ticket->getRole($this->staff);
-        if (!$role || !$role->hasPerm(Ticket::PERM_REPLY)) {
+        if (!$this->staff->isAdmin() && (!$role || !$role->hasPerm(Ticket::PERM_REPLY))) {
             throw new McpException(-32602, 'Permission denied: Cannot reply to this ticket');
         }
 
@@ -1315,13 +1315,13 @@ class McpProtocolHandler {
             throw new McpException(-32602, 'Invalid status_id');
         }
 
-        // Check permission based on status state
+        // Check permission based on status state - admins can always change status
         $role = $ticket->getRole($this->staff);
-        if (!$role) {
+        if (!$this->staff->isAdmin() && !$role) {
             throw new McpException(-32602, 'Permission denied: No role for this ticket');
         }
 
-        if ($status->getState() === 'closed' && !$role->hasPerm(Ticket::PERM_CLOSE)) {
+        if (!$this->staff->isAdmin() && $status->getState() === 'closed' && (!$role || !$role->hasPerm(Ticket::PERM_CLOSE))) {
             throw new McpException(-32602, 'Permission denied: Cannot close this ticket');
         }
 
@@ -1359,9 +1359,9 @@ class McpProtocolHandler {
     private function tool_assign_ticket($args) {
         $ticket = $this->resolveTicket($args);
 
-        // Check permission
+        // Check permission - admins can always assign
         $role = $ticket->getRole($this->staff);
-        if (!$role || !$role->hasPerm(Ticket::PERM_ASSIGN)) {
+        if (!$this->staff->isAdmin() && (!$role || !$role->hasPerm(Ticket::PERM_ASSIGN))) {
             throw new McpException(-32602, 'Permission denied: Cannot assign this ticket');
         }
 
@@ -1490,8 +1490,8 @@ class McpProtocolHandler {
      * Create task tool
      */
     private function tool_create_task($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(TaskModel::PERM_CREATE)) {
+        // Check permission - admins can always create tasks
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(TaskModel::PERM_CREATE)) {
             throw new McpException(-32602, 'Permission denied: Cannot create tasks');
         }
 
@@ -1575,14 +1575,14 @@ class McpProtocolHandler {
         $result = false;
         switch ($args['action']) {
             case 'close':
-                if (!$this->staff->hasPerm(TaskModel::PERM_CLOSE)) {
+                if (!$this->staff->isAdmin() && !$this->staff->hasPerm(TaskModel::PERM_CLOSE)) {
                     throw new McpException(-32602, 'Permission denied: Cannot close tasks');
                 }
                 $result = $task->setStatus('closed', '', $errors);
                 break;
 
             case 'reopen':
-                if (!$this->staff->hasPerm(TaskModel::PERM_CLOSE)) {
+                if (!$this->staff->isAdmin() && !$this->staff->hasPerm(TaskModel::PERM_CLOSE)) {
                     throw new McpException(-32602, 'Permission denied: Cannot reopen tasks');
                 }
                 $result = $task->setStatus('open', '', $errors);
@@ -1695,8 +1695,8 @@ class McpProtocolHandler {
      * Create FAQ tool
      */
     private function tool_create_faq($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+        // Check permission - admins can always manage FAQs
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
             throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
         }
 
@@ -1749,8 +1749,8 @@ class McpProtocolHandler {
      * Update FAQ tool
      */
     private function tool_update_faq($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+        // Check permission - admins can always manage FAQs
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
             throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
         }
 
@@ -1816,8 +1816,8 @@ class McpProtocolHandler {
      * Delete FAQ tool
      */
     private function tool_delete_faq($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+        // Check permission - admins can always manage FAQs
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
             throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
         }
 
@@ -2045,8 +2045,8 @@ class McpProtocolHandler {
      * Create organization tool
      */
     private function tool_create_organization($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(OrganizationModel::PERM_CREATE)) {
+        // Check permission - admins can always create organizations
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(OrganizationModel::PERM_CREATE)) {
             throw new McpException(-32602, 'Permission denied: Cannot create organizations');
         }
 
@@ -2127,8 +2127,8 @@ class McpProtocolHandler {
      * Update organization tool
      */
     private function tool_update_organization($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
+        // Check permission - admins can always edit organizations
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
             throw new McpException(-32602, 'Permission denied: Cannot edit organizations');
         }
 
@@ -2232,8 +2232,8 @@ class McpProtocolHandler {
      * Add user to organization tool
      */
     private function tool_add_user_to_organization($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
+        // Check permission - admins can always edit organizations
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
             throw new McpException(-32602, 'Permission denied: Cannot edit organizations');
         }
 
@@ -2297,8 +2297,8 @@ class McpProtocolHandler {
      * Remove user from organization tool
      */
     private function tool_remove_user_from_organization($args) {
-        // Check permission
-        if (!$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
+        // Check permission - admins can always edit organizations
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(OrganizationModel::PERM_EDIT)) {
             throw new McpException(-32602, 'Permission denied: Cannot edit organizations');
         }
 
