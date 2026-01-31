@@ -790,6 +790,26 @@ class McpProtocolHandler {
                         )
                     )
                 )
+            ),
+            // Ticket Status Tools
+            'get_ticket_statuses' => array(
+                'name' => 'get_ticket_statuses',
+                'description' => 'Get available ticket statuses with optional filtering by state',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'state' => array(
+                            'type' => 'string',
+                            'description' => 'Filter by state (open, closed, archived, deleted)',
+                            'enum' => array('open', 'closed', 'archived', 'deleted')
+                        ),
+                        'enabled_only' => array(
+                            'type' => 'boolean',
+                            'description' => 'Only return enabled statuses (default: true)',
+                            'default' => true
+                        )
+                    )
+                )
             )
         );
     }
@@ -2316,6 +2336,47 @@ class McpProtocolHandler {
         );
     }
 
+    /**
+     * Get ticket statuses tool
+     */
+    private function tool_get_ticket_statuses($args) {
+        $enabledOnly = $args['enabled_only'] ?? true;
+
+        $statuses = TicketStatus::objects();
+
+        // Filter by state if specified
+        if (!empty($args['state'])) {
+            $statuses->filter(array('state' => $args['state']));
+        }
+
+        // Filter by enabled status
+        if ($enabledOnly) {
+            $statuses->filter(array('mode__hasbit' => TicketStatus::ENABLED));
+        }
+
+        $statuses->order_by('sort', 'name');
+
+        $results = array();
+        foreach ($statuses as $status) {
+            $results[] = array(
+                'id' => $status->getId(),
+                'name' => $status->getName(),
+                'state' => $status->getState(),
+                'sort_order' => $status->getSortOrder(),
+                'enabled' => $status->isEnabled(),
+                'internal' => $status->isInternal(),
+                'default' => $status->isDefault(),
+                'reopenable' => $status->isReopenable(),
+                'ticket_count' => $status->getNumTickets()
+            );
+        }
+
+        return array(
+            'statuses' => $results,
+            'total' => count($results)
+        );
+    }
+
     // =========================================================================
     // Resource Implementations
     // =========================================================================
@@ -2394,11 +2455,15 @@ class McpProtocolHandler {
      */
     private function resource_statuses() {
         $statuses = array();
-        foreach (TicketStatus::objects() as $status) {
+        foreach (TicketStatus::objects()->order_by('sort', 'name') as $status) {
             $statuses[] = array(
                 'id' => $status->getId(),
                 'name' => $status->getName(),
-                'state' => $status->getState()
+                'state' => $status->getState(),
+                'sort_order' => $status->getSortOrder(),
+                'enabled' => $status->isEnabled(),
+                'internal' => $status->isInternal(),
+                'default' => $status->isDefault()
             );
         }
         return array('statuses' => $statuses);
