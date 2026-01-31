@@ -99,9 +99,29 @@ if ($_POST && is_object($ticket) && $ticket->getId()) {
                         && !$ticket->isClosed()
                         && $thisclient->getId() == $ticket->getUserId()) {
                     $errors_arr = array();
+                    // Debug: Check closeable status
+                    $closeable = $ticket->isCloseable();
+                    $ost->logDebug('Client Ticket Close Attempt', sprintf(
+                        "Ticket #%s close attempt by client %s\n" .
+                        "isCloseable: %s\n" .
+                        "Open Tasks: %d\n" .
+                        "Has Topic: %s\n" .
+                        "Missing Fields: %s",
+                        $ticket->getNumber(),
+                        $thisclient->getEmail(),
+                        is_string($closeable) ? $closeable : ($closeable ? 'true' : 'false'),
+                        $ticket->getNumOpenTasks(),
+                        $ticket->getTopicId() ? 'Yes' : 'No',
+                        implode(', ', Ticket::getMissingRequiredFields($ticket) ?: array('none'))
+                    ));
                     if ($ticket->setStatus('closed', '', $errors_arr, false)) {
                         $msg = __('Message posted and ticket closed successfully');
                     } else {
+                        $ost->logWarning('Client Ticket Close Failed', sprintf(
+                            "Ticket #%s close failed\nErrors: %s",
+                            $ticket->getNumber(),
+                            print_r($errors_arr, true)
+                        ));
                         $errors['err'] = $errors_arr['err'] ?: __('Message posted but unable to close ticket');
                     }
                 }
