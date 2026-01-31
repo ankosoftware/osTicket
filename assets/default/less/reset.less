@@ -7,18 +7,22 @@ html {
 
 body {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.231;
+  font-size: 14px;
+  line-height: 1.5;
   padding: 0;
 }
 
-body, input, select, textarea {
-  font-family: sans-serif;
-  color: #000;
+body, input, select, textarea, button {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #374151;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 b, strong {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 blockquote {
@@ -29,7 +33,7 @@ hr {
   display: block;
   height: 1px;
   border: 0;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #e5e7eb;
   margin: 1em 0;
   padding: 0;
 }
@@ -62,23 +66,17 @@ label {
   cursor: pointer;
 }
 
-input, select, textarea {
+input, select, textarea, button {
   font-size: 100%;
   margin: 0;
   vertical-align: baseline;
-  *vertical-align: middle;
 }
 
 input {
   line-height: normal;
-  *overflow: visible;
 }
 
-table input {
-  *overflow: auto;
-}
-
-input[type="button"], input[type="reset"], input[type="submit"] {
+input[type="button"], input[type="reset"], input[type="submit"], button {
   cursor: pointer;
   -webkit-appearance: button;
 }
@@ -102,7 +100,7 @@ th, td {
   vertical-align: top;
 }
 
-th { text-align: left; font-weight: normal; }
+th { text-align: left; font-weight: 600; }
 
 h1, h2, h3, h4, h5, h6, form, fieldset {
   margin: 0;

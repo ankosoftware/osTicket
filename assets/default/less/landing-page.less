@@ -1,58 +1,126 @@
 #landing_page {
-  #new_ticket {
-    margin-top: 40px;
-    width: 295px;
-    padding-left: 75px;
-    float: left;
-    background: url('../images/new_ticket_icon.png') top left no-repeat;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 16px;
+
+  #new_ticket,
+  #check_status {
+    flex: 1;
+    min-width: 280px;
+    margin-top: 0;
+    padding: 24px;
+    padding-left: 80px;
+    background: @background-white;
+    border: 1px solid @border-color;
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.2s ease;
+
+    &::before {
+      font-family: 'FontAwesome';
+      position: absolute;
+      left: 24px;
+      top: 24px;
+      font-size: 32px;
+      color: @primary-color;
+    }
+
+    &:hover {
+      border-color: @primary-color;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      color: @text-color;
+    }
+
+    p {
+      margin: 0 0 16px 0;
+      color: @text-muted;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    a.button {
+      margin-top: 8px;
+    }
   }
 
-  #check_status {
-    margin-top: 40px;
-    width: 295px;
-    padding-left: 75px;
-    float: right;
-    background: url('../images/check_status_icon.png') top left no-repeat;
+  #new_ticket::before {
+    content: '\f0a2';
+  }
+
+  #check_status::before {
+    content: '\f002';
   }
 }
 
-/* Landing page FAQ not yet implemented. */
+/* Landing page FAQ */
 #faq {
   clear: both;
-  margin: 0;
-  padding: 5px;
+  margin: 32px 0 0 0;
+  padding: 0;
+
+  h3 {
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: @text-color;
+  }
 
   ol {
-    font-size: 15px;
-    margin-left: 0;
-    padding-left: 0;
-    border-top:1px solid #ddd;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    overflow: hidden;
 
     li {
       list-style: none;
       margin: 0;
-      padding:0;
-      color: #999;
-      a {
-        display:block;
-        padding:5px 0;
-        height:auto !important;
-        overflow:hidden;
-        margin:0;
-        border-bottom:1px solid #ddd;
-        line-height: 16px;
-        padding-left: 24px;
-        background: url('../images/icons/page.png') 0 50% no-repeat;
+      padding: 0;
+      color: @text-muted;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid @border-color;
       }
 
-      a:hover {
-        background-color:#e9f5ff;
+      a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        color: @text-color;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        background: none;
+
+        &::before {
+          font-family: 'FontAwesome';
+          content: '\f15c';
+          color: @text-muted;
+          font-size: 14px;
+        }
+
+        &:hover {
+          background: @background-light;
+          color: @primary-color;
+
+          &::before {
+            color: @primary-color;
+          }
+        }
       }
     }
   }
+
   .article-meta {
-    padding:5px;
-    background:#fafafa;
+    padding: 8px 16px;
+    background: @background-light;
+    font-size: 12px;
+    color: @text-muted;
   }
 }
-
