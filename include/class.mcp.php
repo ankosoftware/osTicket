@@ -305,6 +305,37 @@ class McpProtocolHandler {
                     )
                 )
             ),
+            'transfer_ticket' => array(
+                'name' => 'transfer_ticket',
+                'description' => 'Transfer a ticket to a different department',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'ticket_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Ticket ID'
+                        ),
+                        'ticket_number' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket number (alternative to ticket_id)'
+                        ),
+                        'dept_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Target department ID'
+                        ),
+                        'comments' => array(
+                            'type' => 'string',
+                            'description' => 'Optional reason for the transfer (will be posted as internal note)'
+                        ),
+                        'alert' => array(
+                            'type' => 'boolean',
+                            'description' => 'Send alert to new department members',
+                            'default' => true
+                        )
+                    ),
+                    'required' => array('dept_id')
+                )
+            ),
             'search_tasks' => array(
                 'name' => 'search_tasks',
                 'description' => 'Search for tasks with various filters',
@@ -1555,6 +1586,98 @@ class McpProtocolHandler {
                 'id' => $assignee->getId(),
                 'name' => (string) $assignee->getName()
             )
+        );
+    }
+
+    /**
+     * Transfer ticket to different department
+     */
+    private function tool_transfer_ticket($args) {
+        $ticket = $this->resolveTicket($args);
+
+        // Check permission - admins can always transfer
+        $role = $ticket->getRole($this->staff);
+        if (!$this->staff->isAdmin() && (!$role || !$role->hasPerm(Ticket::PERM_TRANSFER))) {
+            throw new McpException(-32602, 'Permission denied: Cannot transfer this ticket');
+        }
+
+        if (empty($args['dept_id'])) {
+            throw new McpException(-32602, 'Missing required field: dept_id');
+        }
+
+        $deptId = intval($args['dept_id']);
+        $dept = Dept::lookup($deptId);
+        if (!$dept) {
+            throw new McpException(-32602, 'Invalid dept_id: Department not found');
+        }
+
+        // Check if already in this department
+        if ($ticket->getDeptId() == $deptId) {
+            throw new McpException(-32602, 'Ticket is already in the specified department');
+        }
+
+        $currentDept = $ticket->getDept();
+        $alert = $args['alert'] ?? true;
+
+        // Temporarily set global staff for logging
+        global $thisstaff;
+        $oldStaff = $thisstaff;
+        $thisstaff = $this->staff;
+
+        // Update department
+        $ticket->dept_id = $deptId;
+
+        // If ticket is assigned to staff who is not member of new department
+        // and department requires members-only assignment, unassign
+        if ($ticket->isAssigned() && ($staff = $ticket->getStaff())) {
+            if ($dept->assignMembersOnly() && !$dept->isMember($staff)) {
+                $ticket->staff_id = 0;
+            }
+        }
+
+        // Recalculate SLA based on new department
+        $ticket->selectSLAId();
+
+        $result = $ticket->save();
+
+        if (!$result) {
+            $thisstaff = $oldStaff;
+            throw new McpException(-32602, 'Failed to transfer ticket');
+        }
+
+        // Log transfer event
+        $ticket->logEvent('transferred', array('dept' => $dept->getName()));
+
+        // Post internal note if comments provided
+        if (!empty($args['comments'])) {
+            $title = sprintf('%s transferred from %s to %s',
+                'Ticket',
+                $currentDept ? $currentDept->getName() : 'Unknown',
+                $dept->getName()
+            );
+
+            $noteErrors = array();
+            $ticket->postNote(
+                array('note' => $args['comments'], 'title' => $title),
+                $noteErrors,
+                $thisstaff,
+                false
+            );
+        }
+
+        $thisstaff = $oldStaff;
+
+        return array(
+            'success' => true,
+            'ticket_number' => $ticket->getNumber(),
+            'department' => array(
+                'id' => $dept->getId(),
+                'name' => $dept->getName()
+            ),
+            'previous_department' => $currentDept ? array(
+                'id' => $currentDept->getId(),
+                'name' => $currentDept->getName()
+            ) : null
         );
     }
 
@@ -3146,9 +3269,9 @@ class McpProtocolHandler {
             'attachments' => array()
         );
 
-        // Add attachments (non-inline only)
+        // Add all attachments (both inline and separate)
         if ($entry->getAttachments()) {
-            foreach ($entry->getAttachments()->getSeparates() as $att) {
+            foreach ($entry->getAttachments()->getAll() as $att) {
                 $data['attachments'][] = $this->formatAttachment($att);
             }
         }
@@ -3167,6 +3290,8 @@ class McpProtocolHandler {
             'filename' => $att->getFilename(),
             'size' => $file ? $file->getSize() : null,
             'type' => $file ? $file->getType() : null,
+            'inline' => (bool) $att->inline,
+            'cid' => $file ? $file->getKey() : null,
             'download_url' => $file ? $file->getExternalDownloadUrl() : null
         );
     }
