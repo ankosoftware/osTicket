@@ -98,31 +98,22 @@ if (osTicket::is_ie())
             echo sprintf('<div class="notice_bar">%s</div>', $ost->getNotice());
         ?>
         <div id="header">
-            <div class="pull-right flush-right">
-            <p>
-             <?php
-                if ($thisclient && is_object($thisclient) && $thisclient->isValid()
-                    && !$thisclient->isGuest()) {
-                 echo Format::htmlchars($thisclient->getName()).'&nbsp;|';
-                 ?>
-                <a href="<?php echo ROOT_PATH; ?>profile.php"><?php echo __('Profile'); ?></a> |
-                <a href="<?php echo ROOT_PATH; ?>tickets.php"><?php echo sprintf(__('Tickets <b>(%d)</b>'), $thisclient->getNumTickets()); ?></a> -
-                <a href="<?php echo $signout_url; ?>"><?php echo __('Sign Out'); ?></a>
-            <?php
-            } elseif($nav) {
-                if ($cfg->getClientRegistrationMode() == 'public') { ?>
-                    <?php echo __('Guest User'); ?> | <?php
-                }
-                if ($thisclient && $thisclient->isValid() && $thisclient->isGuest()) { ?>
-                    <a href="<?php echo $signout_url; ?>"><?php echo __('Sign Out'); ?></a><?php
-                }
-                elseif ($cfg->getClientRegistrationMode() != 'disabled') { ?>
-                    <a href="<?php echo $signin_url; ?>"><?php echo __('Sign In'); ?></a>
-<?php
-                }
-            } ?>
-            </p>
-            <p>
+            <a id="logo" href="<?php echo ROOT_PATH; ?>index.php"
+            title="<?php echo __('Support Center'); ?>">
+                <img src="<?php echo ROOT_PATH; ?>logo.php" border=0 alt="<?php
+                echo $ost->getConfig()->getTitle(); ?>">
+            </a>
+            <?php if($nav){ ?>
+            <ul id="nav">
+                <?php
+                if($nav && ($navs=$nav->getNavLinks()) && is_array($navs)){
+                    foreach($navs as $name =>$nav) {
+                        echo sprintf('<li><a class="%s %s" href="%s">%s</a></li>%s',$nav['active']?'active':'',$name,(ROOT_PATH.$nav['href']),$nav['desc'],"\n");
+                    }
+                } ?>
+            </ul>
+            <?php } ?>
+            <div class="header-right">
 <?php
 if (($all_langs = Internationalization::getConfiguredSystemLanguages())
     && (count($all_langs) > 1)
@@ -133,36 +124,36 @@ if (($all_langs = Internationalization::getConfiguredSystemLanguages())
         list($lang, $locale) = explode('_', $code);
         $qs['lang'] = $code;
 ?>
-        <a class="flag flag-<?php echo strtolower($info['flag'] ?: $locale ?: $lang); ?>"
-            href="?<?php echo http_build_query($qs);
-            ?>" title="<?php echo Internationalization::getLanguageDescription($code); ?>">&nbsp;</a>
+                <a class="flag flag-<?php echo strtolower($info['flag'] ?: $locale ?: $lang); ?>"
+                    href="?<?php echo http_build_query($qs);
+                    ?>" title="<?php echo Internationalization::getLanguageDescription($code); ?>">&nbsp;</a>
 <?php }
 } ?>
-            </p>
-            </div>
-            <a class="pull-left" id="logo" href="<?php echo ROOT_PATH; ?>index.php"
-            title="<?php echo __('Support Center'); ?>">
-                <span class="valign-helper"></span>
-                <img src="<?php echo ROOT_PATH; ?>logo.php" border=0 alt="<?php
-                echo $ost->getConfig()->getTitle(); ?>">
-            </a>
-        </div>
-        <div class="clear"></div>
-        <?php
-        if($nav){ ?>
-        <ul id="nav" class="flush-left">
+                <span class="user-menu">
+<?php
+                if ($thisclient && is_object($thisclient) && $thisclient->isValid()
+                    && !$thisclient->isGuest()) {
+                 echo '<span class="user-name">'.Format::htmlchars($thisclient->getName()).'</span>';
+                 ?>
+                <a href="<?php echo ROOT_PATH; ?>profile.php"><?php echo __('Profile'); ?></a>
+                <a href="<?php echo ROOT_PATH; ?>tickets.php"><?php echo sprintf(__('Tickets (%d)'), $thisclient->getNumTickets()); ?></a>
+                <a href="<?php echo $signout_url; ?>"><?php echo __('Sign Out'); ?></a>
             <?php
-            if($nav && ($navs=$nav->getNavLinks()) && is_array($navs)){
-                foreach($navs as $name =>$nav) {
-                    echo sprintf('<li><a class="%s %s" href="%s">%s</a></li>%s',$nav['active']?'active':'',$name,(ROOT_PATH.$nav['href']),$nav['desc'],"\n");
+            } elseif($nav) {
+                if ($thisclient && $thisclient->isValid() && $thisclient->isGuest()) { ?>
+                    <a href="<?php echo $signout_url; ?>"><?php echo __('Sign Out'); ?></a><?php
+                }
+                elseif ($cfg->getClientRegistrationMode() != 'disabled') { ?>
+                    <a href="<?php echo $signin_url; ?>" class="btn-signin"><?php echo __('Sign In'); ?></a>
+<?php
                 }
             } ?>
-        </ul>
-        <?php
-        }else{ ?>
+                </span>
+            </div>
+        </div>
+        <?php if(!$nav){ ?>
          <hr>
-        <?php
-        } ?>
+        <?php } ?>
         <div id="content">
 
          <?php if($errors['err']) { ?>

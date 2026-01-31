@@ -12,52 +12,89 @@ body {
 
 #header {
   position: relative;
-  padding: 20px 48px;
+  padding: 0 48px;
   border-bottom: 1px solid @border-color;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 32px;
+  min-height: 64px;
 
   #logo {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 
     img {
-      max-height: 40px;
+      max-height: 36px;
       width: auto;
     }
   }
 
-  .pull-right {
+  .header-right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+
+    .flag {
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 
-  p {
-    margin: 0;
+  .user-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 13px;
     color: @text-muted;
 
+    .user-name {
+      font-weight: 500;
+      color: @text-color;
+      padding-right: 8px;
+      border-right: 1px solid @border-color;
+      margin-right: 4px;
+    }
+
     a {
       color: @text-muted;
-      margin: 0 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
 
       &:hover {
         color: @primary-color;
+        background: @background-light;
+      }
+    }
+
+    .btn-signin {
+      background: @primary-color;
+      color: @background-white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+
+      &:hover {
+        background: @primary-hover;
+        color: @background-white;
       }
     }
   }
 }
 
 #nav {
-  margin: 0;
-  padding: 0 48px;
-  background: @background-light;
-  border-bottom: 1px solid @border-color;
   display: flex;
-  gap: 0;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 
   li {
     margin: 0;
@@ -68,30 +105,28 @@ body {
     a {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 14px 20px;
+      gap: 6px;
+      padding: 8px 14px;
       color: @text-muted;
       font-size: 14px;
       font-weight: 500;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -1px;
+      border-radius: 6px;
       transition: all 0.15s ease;
       background: none;
 
       &::before {
         font-family: 'FontAwesome';
-        font-size: 15px;
+        font-size: 14px;
       }
 
       &:hover {
         color: @text-color;
-        background: rgba(0, 0, 0, 0.03);
+        background: @background-light;
       }
 
       &.active {
         color: @primary-color;
-        background: @background-white;
-        border-bottom-color: @primary-color;
+        background: rgba(59, 130, 246, 0.1);
       }
     }
 
