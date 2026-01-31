@@ -18,7 +18,10 @@
 require 'api.inc.php';
 require_once INCLUDE_DIR."class.dispatcher.php";
 
+// When accessed directly as /api/mcp.php, the path info may be empty or just /
+// Also handle /mcp.json for when routing through http.php
 $dispatcher = patterns('',
+    url_post("^/?$", array('api.mcp.php:McpApiController', 'handle')),
     url_post("^/mcp\.json$", array('api.mcp.php:McpApiController', 'handle'))
 );
 
