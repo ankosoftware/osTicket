@@ -984,7 +984,7 @@ class McpProtocolHandler {
                 'description' => 'Get information about the currently authenticated staff member, their role, and permissions',
                 'inputSchema' => array(
                     'type' => 'object',
-                    'properties' => array()
+                    'properties' => new stdClass()
                 )
             )
         );
