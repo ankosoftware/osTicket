@@ -3135,14 +3135,39 @@ class McpProtocolHandler {
     private function formatThreadEntry($entry) {
         $typeMap = array('M' => 'message', 'R' => 'response', 'N' => 'note');
 
-        return array(
+        $data = array(
             'id' => $entry->getId(),
             'type' => $typeMap[$entry->type] ?? $entry->type,
             'poster' => $entry->poster,
             'body' => $entry->getBody() ? $entry->getBody()->getClean() : null,
             'created' => $entry->created,
             'staff_id' => $entry->staff_id,
-            'user_id' => $entry->user_id
+            'user_id' => $entry->user_id,
+            'attachments' => array()
+        );
+
+        // Add attachments (non-inline only)
+        if ($entry->getAttachments()) {
+            foreach ($entry->getAttachments()->getSeparates() as $att) {
+                $data['attachments'][] = $this->formatAttachment($att);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Format attachment
+     */
+    private function formatAttachment($att) {
+        $file = $att->getFile();
+        return array(
+            'id' => $att->getId(),
+            'file_id' => $att->getFileId(),
+            'filename' => $att->getFilename(),
+            'size' => $file ? $file->getSize() : null,
+            'type' => $file ? $file->getType() : null,
+            'download_url' => $file ? $file->getExternalDownloadUrl() : null
         );
     }
 
