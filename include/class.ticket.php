@@ -1494,7 +1494,11 @@ implements RestrictedAccess, Threadable, Searchable {
                 $status = TicketStatus::lookup($status);
             } else {
                 // Lookup by state name (e.g., 'closed', 'open')
-                $status = TicketStatus::lookup(array('state' => $status));
+                // Use filter + first to handle multiple statuses with same state
+                $status = TicketStatus::objects()
+                    ->filter(array('state' => $status))
+                    ->order_by('sort')
+                    ->first();
             }
             if (!$status) {
                 $errors['err'] = __('Invalid or unknown ticket status');
