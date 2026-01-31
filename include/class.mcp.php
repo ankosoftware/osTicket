@@ -810,6 +810,15 @@ class McpProtocolHandler {
                         )
                     )
                 )
+            ),
+            // Current User Tool
+            'get_current_user' => array(
+                'name' => 'get_current_user',
+                'description' => 'Get information about the currently authenticated staff member, their role, and permissions',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array()
+                )
             )
         );
     }
@@ -2374,6 +2383,105 @@ class McpProtocolHandler {
         return array(
             'statuses' => $results,
             'total' => count($results)
+        );
+    }
+
+    /**
+     * Get current user tool
+     */
+    private function tool_get_current_user($args) {
+        $staff = $this->staff;
+        $role = $staff->getRole();
+
+        // Get all permissions for this staff member
+        $permissions = array();
+
+        // Define permission categories and their permissions
+        $permissionDefs = array(
+            'tickets' => array(
+                Ticket::PERM_CREATE => 'create',
+                Ticket::PERM_EDIT => 'edit',
+                Ticket::PERM_ASSIGN => 'assign',
+                Ticket::PERM_TRANSFER => 'transfer',
+                Ticket::PERM_REFER => 'refer',
+                Ticket::PERM_MERGE => 'merge',
+                Ticket::PERM_LINK => 'link',
+                Ticket::PERM_REPLY => 'reply',
+                Ticket::PERM_CLOSE => 'close',
+                Ticket::PERM_DELETE => 'delete',
+            ),
+            'tasks' => array(
+                TaskModel::PERM_CREATE => 'create',
+                TaskModel::PERM_EDIT => 'edit',
+                TaskModel::PERM_ASSIGN => 'assign',
+                TaskModel::PERM_TRANSFER => 'transfer',
+                TaskModel::PERM_CLOSE => 'close',
+                TaskModel::PERM_DELETE => 'delete',
+            ),
+            'knowledgebase' => array(
+                FAQ::PERM_MANAGE => 'manage',
+            ),
+            'organizations' => array(
+                OrganizationModel::PERM_CREATE => 'create',
+                OrganizationModel::PERM_EDIT => 'edit',
+                OrganizationModel::PERM_DELETE => 'delete',
+            ),
+        );
+
+        foreach ($permissionDefs as $category => $perms) {
+            $permissions[$category] = array();
+            foreach ($perms as $permKey => $permName) {
+                $permissions[$category][$permName] = $staff->hasPerm($permKey);
+            }
+        }
+
+        // Get departments access
+        $departments = array();
+        $deptIds = $staff->getDepts();
+        if ($deptIds) {
+            foreach ($deptIds as $deptId) {
+                $dept = Dept::lookup($deptId);
+                if ($dept) {
+                    $departments[] = array(
+                        'id' => $dept->getId(),
+                        'name' => $dept->getName()
+                    );
+                }
+            }
+        }
+
+        // Get teams
+        $teams = array();
+        foreach ($staff->teams as $tm) {
+            if ($tm->team) {
+                $teams[] = array(
+                    'id' => $tm->team->getId(),
+                    'name' => $tm->team->getName()
+                );
+            }
+        }
+
+        return array(
+            'staff' => array(
+                'id' => $staff->getId(),
+                'username' => $staff->getUserName(),
+                'name' => (string) $staff->getName(),
+                'email' => $staff->getEmail(),
+                'isadmin' => $staff->isAdmin(),
+                'isactive' => $staff->isActive(),
+                'onvacation' => $staff->onVacation()
+            ),
+            'role' => $role ? array(
+                'id' => $role->getId(),
+                'name' => $role->getName()
+            ) : null,
+            'department' => array(
+                'id' => $staff->getDeptId(),
+                'name' => $staff->getDept() ? $staff->getDept()->getName() : null
+            ),
+            'permissions' => $permissions,
+            'departments_access' => $departments,
+            'teams' => $teams
         );
     }
 
