@@ -552,6 +552,134 @@ class McpProtocolHandler {
                     'required' => array('faq_id')
                 )
             ),
+            // FAQ Category Tools
+            'search_faq_categories' => array(
+                'name' => 'search_faq_categories',
+                'description' => 'Search FAQ categories',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'q' => array(
+                            'type' => 'string',
+                            'description' => 'Search by category name'
+                        ),
+                        'visibility' => array(
+                            'type' => 'string',
+                            'description' => 'Filter by visibility (private, public, featured)',
+                            'enum' => array('private', 'public', 'featured')
+                        ),
+                        'parent_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Filter by parent category ID (0 for root categories)'
+                        ),
+                        'page' => array(
+                            'type' => 'integer',
+                            'description' => 'Page number for pagination (default: 1)',
+                            'default' => 1
+                        ),
+                        'limit' => array(
+                            'type' => 'integer',
+                            'description' => 'Results per page (default: 25, max: 100)',
+                            'default' => 25
+                        )
+                    )
+                )
+            ),
+            'get_faq_category' => array(
+                'name' => 'get_faq_category',
+                'description' => 'Get full details of an FAQ category',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'category_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Category ID'
+                        )
+                    ),
+                    'required' => array('category_id')
+                )
+            ),
+            'create_faq_category' => array(
+                'name' => 'create_faq_category',
+                'description' => 'Create a new FAQ category',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'name' => array(
+                            'type' => 'string',
+                            'description' => 'Category name (min 3 characters)'
+                        ),
+                        'description' => array(
+                            'type' => 'string',
+                            'description' => 'Category description'
+                        ),
+                        'visibility' => array(
+                            'type' => 'string',
+                            'description' => 'Visibility (private, public, featured)',
+                            'enum' => array('private', 'public', 'featured'),
+                            'default' => 'private'
+                        ),
+                        'parent_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Parent category ID (optional, for subcategories)'
+                        ),
+                        'notes' => array(
+                            'type' => 'string',
+                            'description' => 'Internal notes'
+                        )
+                    ),
+                    'required' => array('name', 'description')
+                )
+            ),
+            'update_faq_category' => array(
+                'name' => 'update_faq_category',
+                'description' => 'Update an existing FAQ category',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'category_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Category ID'
+                        ),
+                        'name' => array(
+                            'type' => 'string',
+                            'description' => 'Category name (min 3 characters)'
+                        ),
+                        'description' => array(
+                            'type' => 'string',
+                            'description' => 'Category description'
+                        ),
+                        'visibility' => array(
+                            'type' => 'string',
+                            'description' => 'Visibility (private, public, featured)',
+                            'enum' => array('private', 'public', 'featured')
+                        ),
+                        'parent_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Parent category ID (0 to make root category)'
+                        ),
+                        'notes' => array(
+                            'type' => 'string',
+                            'description' => 'Internal notes'
+                        )
+                    ),
+                    'required' => array('category_id')
+                )
+            ),
+            'delete_faq_category' => array(
+                'name' => 'delete_faq_category',
+                'description' => 'Delete an FAQ category (must have no FAQs)',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'category_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Category ID'
+                        )
+                    ),
+                    'required' => array('category_id')
+                )
+            ),
             // Email Ban List Tools
             'list_banned_emails' => array(
                 'name' => 'list_banned_emails',
@@ -1847,6 +1975,224 @@ class McpProtocolHandler {
     }
 
     /**
+     * Search FAQ categories tool
+     */
+    private function tool_search_faq_categories($args) {
+        $page = max(1, intval($args['page'] ?? 1));
+        $limit = min(100, max(1, intval($args['limit'] ?? 25)));
+        $offset = ($page - 1) * $limit;
+
+        $categories = Category::objects();
+
+        // Apply filters
+        if (!empty($args['q'])) {
+            $categories->filter(array('name__contains' => $args['q']));
+        }
+
+        if (!empty($args['visibility'])) {
+            $visibilityMap = array(
+                'private' => Category::VISIBILITY_PRIVATE,
+                'public' => Category::VISIBILITY_PUBLIC,
+                'featured' => Category::VISIBILITY_FEATURED
+            );
+            if (isset($visibilityMap[$args['visibility']])) {
+                $categories->filter(array('ispublic' => $visibilityMap[$args['visibility']]));
+            }
+        }
+
+        if (isset($args['parent_id'])) {
+            $parentId = intval($args['parent_id']);
+            if ($parentId === 0) {
+                $categories->filter(Q::any(array(
+                    'category_pid' => 0,
+                    'category_pid__isnull' => true
+                )));
+            } else {
+                $categories->filter(array('category_pid' => $parentId));
+            }
+        }
+
+        $categories->order_by('name');
+
+        $total = $categories->count();
+        $categories->limit($limit)->offset($offset);
+
+        $results = array();
+        foreach ($categories as $cat) {
+            $results[] = $this->formatCategorySummary($cat);
+        }
+
+        return array(
+            'categories' => $results,
+            'pagination' => array(
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'pages' => ceil($total / $limit)
+            )
+        );
+    }
+
+    /**
+     * Get FAQ category details tool
+     */
+    private function tool_get_faq_category($args) {
+        if (empty($args['category_id'])) {
+            throw new McpException(-32602, 'Missing required field: category_id');
+        }
+
+        $category = Category::lookup(intval($args['category_id']));
+        if (!$category) {
+            throw new McpException(-32602, 'Category not found');
+        }
+
+        return $this->formatCategoryFull($category);
+    }
+
+    /**
+     * Create FAQ category tool
+     */
+    private function tool_create_faq_category($args) {
+        // Check permission - admins can always manage FAQs
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
+        }
+
+        // Validate required fields
+        if (empty($args['name'])) {
+            throw new McpException(-32602, 'Missing required field: name');
+        }
+        if (empty($args['description'])) {
+            throw new McpException(-32602, 'Missing required field: description');
+        }
+
+        // Map visibility
+        $visibilityMap = array(
+            'private' => Category::VISIBILITY_PRIVATE,
+            'public' => Category::VISIBILITY_PUBLIC,
+            'featured' => Category::VISIBILITY_FEATURED
+        );
+        $visibility = $visibilityMap[$args['visibility'] ?? 'private'] ?? Category::VISIBILITY_PRIVATE;
+
+        // Create category
+        $category = Category::create();
+        $vars = array(
+            'name' => $args['name'],
+            'description' => $args['description'],
+            'ispublic' => $visibility,
+            'pid' => $args['parent_id'] ?? 0,
+            'notes' => $args['notes'] ?? ''
+        );
+
+        $errors = array();
+        if (!$category->update($vars, $errors)) {
+            $errorMsg = is_array($errors) ? implode(', ', array_filter($errors)) : 'Unknown error';
+            throw new McpException(-32602, "Failed to create category: {$errorMsg}");
+        }
+
+        return array(
+            'success' => true,
+            'category' => $this->formatCategorySummary($category)
+        );
+    }
+
+    /**
+     * Update FAQ category tool
+     */
+    private function tool_update_faq_category($args) {
+        // Check permission - admins can always manage FAQs
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
+        }
+
+        if (empty($args['category_id'])) {
+            throw new McpException(-32602, 'Missing required field: category_id');
+        }
+
+        $category = Category::lookup(intval($args['category_id']));
+        if (!$category) {
+            throw new McpException(-32602, 'Category not found');
+        }
+
+        // Build update vars - only include provided fields
+        $vars = array(
+            'id' => $category->getId(),
+            'name' => $args['name'] ?? $category->getName(),
+            'description' => $args['description'] ?? $category->getDescription(),
+            'notes' => $args['notes'] ?? $category->getNotes(),
+            'pid' => isset($args['parent_id']) ? intval($args['parent_id']) : $category->category_pid
+        );
+
+        // Handle visibility
+        if (isset($args['visibility'])) {
+            $visibilityMap = array(
+                'private' => Category::VISIBILITY_PRIVATE,
+                'public' => Category::VISIBILITY_PUBLIC,
+                'featured' => Category::VISIBILITY_FEATURED
+            );
+            $vars['ispublic'] = $visibilityMap[$args['visibility']] ?? $category->ispublic;
+        } else {
+            $vars['ispublic'] = $category->ispublic;
+        }
+
+        $errors = array();
+        if (!$category->update($vars, $errors)) {
+            $errorMsg = is_array($errors) ? implode(', ', array_filter($errors)) : 'Unknown error';
+            throw new McpException(-32602, "Failed to update category: {$errorMsg}");
+        }
+
+        return array(
+            'success' => true,
+            'category' => $this->formatCategorySummary($category)
+        );
+    }
+
+    /**
+     * Delete FAQ category tool
+     */
+    private function tool_delete_faq_category($args) {
+        // Check permission - admins can always manage FAQs
+        if (!$this->staff->isAdmin() && !$this->staff->hasPerm(FAQ::PERM_MANAGE)) {
+            throw new McpException(-32602, 'Permission denied: Cannot manage FAQs');
+        }
+
+        if (empty($args['category_id'])) {
+            throw new McpException(-32602, 'Missing required field: category_id');
+        }
+
+        $category = Category::lookup(intval($args['category_id']));
+        if (!$category) {
+            throw new McpException(-32602, 'Category not found');
+        }
+
+        // Check if category has FAQs
+        if ($category->getNumFAQs(true) > 0) {
+            throw new McpException(-32602, 'Cannot delete category: it contains FAQs. Move or delete FAQs first.');
+        }
+
+        // Check if category has subcategories
+        $subcategories = Category::objects()->filter(array('category_pid' => $category->getId()));
+        if ($subcategories->count() > 0) {
+            throw new McpException(-32602, 'Cannot delete category: it has subcategories. Delete subcategories first.');
+        }
+
+        $catId = $category->getId();
+        $catName = $category->getName();
+
+        if (!$category->delete()) {
+            throw new McpException(-32602, 'Failed to delete category');
+        }
+
+        return array(
+            'success' => true,
+            'deleted' => array(
+                'id' => $catId,
+                'name' => $catName
+            )
+        );
+    }
+
+    /**
      * List banned emails tool
      */
     private function tool_list_banned_emails($args) {
@@ -2877,6 +3223,63 @@ class McpProtocolHandler {
 
         // Add attachment count
         $data['attachment_count'] = $faq->getNumAttachments();
+
+        return $data;
+    }
+
+    /**
+     * Format FAQ category for summary list
+     */
+    private function formatCategorySummary($cat) {
+        $visibilityMap = array(
+            Category::VISIBILITY_PRIVATE => 'private',
+            Category::VISIBILITY_PUBLIC => 'public',
+            Category::VISIBILITY_FEATURED => 'featured'
+        );
+        return array(
+            'id' => $cat->getId(),
+            'name' => $cat->getName(),
+            'visibility' => $visibilityMap[$cat->ispublic] ?? 'private',
+            'parent_id' => $cat->category_pid ?: null,
+            'faq_count' => $cat->getNumFAQs(true),
+            'created' => $cat->getCreateDate(),
+            'updated' => $cat->getUpdateDate()
+        );
+    }
+
+    /**
+     * Format FAQ category with full details
+     */
+    private function formatCategoryFull($cat) {
+        $data = $this->formatCategorySummary($cat);
+
+        // Add description and notes
+        $data['description'] = $cat->getDescription();
+        $data['notes'] = $cat->getNotes();
+
+        // Add parent category info
+        if ($cat->category_pid && ($parent = Category::lookup($cat->category_pid))) {
+            $data['parent'] = array(
+                'id' => $parent->getId(),
+                'name' => $parent->getName()
+            );
+        } else {
+            $data['parent'] = null;
+        }
+
+        // Add subcategories
+        $data['subcategories'] = array();
+        $subcats = Category::objects()->filter(array('category_pid' => $cat->getId()));
+        foreach ($subcats as $subcat) {
+            $data['subcategories'][] = array(
+                'id' => $subcat->getId(),
+                'name' => $subcat->getName(),
+                'faq_count' => $subcat->getNumFAQs(true)
+            );
+        }
+
+        // Add total FAQ count including subcategories
+        $data['total_faq_count'] = $cat->getNumFAQs(false);
 
         return $data;
     }
