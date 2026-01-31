@@ -8,119 +8,382 @@ $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 $basePath = dirname($basePath); // Go up from /scp/
 $mcpEndpoint = $protocol . '://' . $host . $basePath . '/api/mcp.json';
 ?>
+<style>
+.mcp-container {
+    padding: 15px 0;
+}
+.mcp-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.mcp-section-header {
+    background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
+    border-bottom: 1px solid #ddd;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+.mcp-section-header i {
+    margin-right: 8px;
+    color: #184E81;
+}
+.mcp-section-body {
+    padding: 20px;
+}
+.mcp-endpoint-box {
+    background: #f0f7ff;
+    border: 1px solid #b8d4f0;
+    border-radius: 4px;
+    padding: 15px 20px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    color: #184E81;
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.mcp-endpoint-box code {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 0;
+}
+.mcp-endpoint-box .copy-btn {
+    margin-left: 15px;
+    padding: 6px 12px;
+    background: #184E81;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.mcp-endpoint-box .copy-btn:hover {
+    background: #0d3a5f;
+}
+.mcp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+.mcp-card {
+    background: #fafafa;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 15px;
+}
+.mcp-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #333;
+}
+.mcp-card p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+.mcp-tools-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.mcp-tools-table th {
+    text-align: left;
+    padding: 10px 15px;
+    background: #f5f5f5;
+    border-bottom: 2px solid #ddd;
+    font-weight: 600;
+    color: #333;
+}
+.mcp-tools-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
+.mcp-tools-table tr:hover td {
+    background: #fafafa;
+}
+.mcp-tools-table code {
+    background: #e8f4fc;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #184E81;
+    font-weight: 500;
+}
+.mcp-code-block {
+    background: #1e1e1e;
+    border-radius: 4px;
+    padding: 15px 20px;
+    overflow-x: auto;
+    margin: 10px 0;
+}
+.mcp-code-block pre {
+    margin: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #d4d4d4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.mcp-code-block .comment { color: #6a9955; }
+.mcp-code-block .string { color: #ce9178; }
+.mcp-code-block .key { color: #9cdcfe; }
+.mcp-code-block .value { color: #b5cea8; }
+.mcp-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 0;
+    padding: 0;
+    list-style: none;
+    background: #f8f8f8;
+}
+.mcp-tabs li {
+    margin: 0;
+}
+.mcp-tabs li a {
+    display: block;
+    padding: 12px 20px;
+    color: #666;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 500;
+}
+.mcp-tabs li a:hover {
+    color: #333;
+    background: #fff;
+}
+.mcp-tabs li.active a {
+    color: #184E81;
+    border-bottom-color: #184E81;
+    background: #fff;
+}
+.mcp-tab-content {
+    display: none;
+    padding: 20px;
+}
+.mcp-tab-content.active {
+    display: block;
+}
+.mcp-note {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 4px;
+    padding: 12px 15px;
+    font-size: 13px;
+    color: #614700;
+    margin: 15px 0;
+}
+.mcp-note i {
+    margin-right: 8px;
+    color: #faad14;
+}
+.mcp-list {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+.mcp-list li {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+.mcp-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e8f4fc;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #184E81;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+</style>
+
 <div class="sticky bar opaque">
     <div class="content">
         <div class="pull-left flush-left">
-            <h2><?php echo __('MCP Server'); ?> <small>(Model Context Protocol)</small></h2>
+            <h2><i class="icon-cloud"></i> <?php echo __('MCP Server'); ?>
+                <small style="color: #666; font-weight: normal;">&mdash; <?php echo __('Model Context Protocol'); ?></small>
+            </h2>
         </div>
     </div>
 </div>
 <div class="clear"></div>
 
-<div style="padding: 20px; max-width: 900px;">
-    <div style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin-bottom: 20px;">
-        <h3 style="margin-top: 0;"><i class="icon-globe"></i> <?php echo __('MCP Endpoint'); ?></h3>
-        <p><?php echo __('Use the following endpoint to connect AI agents to osTicket:'); ?></p>
-        <code style="display: block; background: #fff; padding: 15px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px; word-break: break-all;">
-            <?php echo Format::htmlchars($mcpEndpoint); ?>
-        </code>
+<div class="mcp-container">
+    <!-- Endpoint Section -->
+    <div class="mcp-section">
+        <div class="mcp-section-header">
+            <i class="icon-link"></i><?php echo __('MCP Endpoint'); ?>
+        </div>
+        <div class="mcp-section-body">
+            <p style="margin: 0 0 15px 0; color: #666;">
+                <?php echo __('Connect AI agents to osTicket using this endpoint:'); ?>
+            </p>
+            <div class="mcp-endpoint-box">
+                <code id="mcp-endpoint"><?php echo Format::htmlchars($mcpEndpoint); ?></code>
+                <button class="copy-btn" onclick="copyEndpoint()">
+                    <i class="icon-copy"></i> <?php echo __('Copy'); ?>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <h3><i class="icon-info-sign"></i> <?php echo __('About MCP'); ?></h3>
-    <p>
-        <?php echo __('The Model Context Protocol (MCP) is an open standard that enables AI agents and assistants to interact with osTicket. MCP provides a standardized way for AI systems to search tickets, create responses, manage tasks, and more.'); ?>
-    </p>
+    <!-- Quick Start -->
+    <div class="mcp-section">
+        <div class="mcp-section-header">
+            <i class="icon-rocket"></i><?php echo __('Quick Start'); ?>
+        </div>
+        <div class="mcp-section-body">
+            <div class="mcp-grid">
+                <div class="mcp-card">
+                    <h4><i class="icon-lock" style="color:#184E81"></i> <?php echo __('1. Authentication'); ?></h4>
+                    <p><?php echo __('Uses HTTP Basic Auth with staff credentials. The staff member\'s permissions determine data access.'); ?></p>
+                </div>
+                <div class="mcp-card">
+                    <h4><i class="icon-cogs" style="color:#184E81"></i> <?php echo __('2. Configure AI Agent'); ?></h4>
+                    <p><?php echo __('Add the endpoint URL to your AI agent (Claude Desktop, custom integration, etc.)'); ?></p>
+                </div>
+                <div class="mcp-card">
+                    <h4><i class="icon-comments" style="color:#184E81"></i> <?php echo __('3. Start Interacting'); ?></h4>
+                    <p><?php echo __('AI agent can now search tickets, create responses, manage tasks, and more.'); ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <h3><i class="icon-lock"></i> <?php echo __('Authentication'); ?></h3>
-    <p><?php echo __('MCP uses HTTP Basic Authentication with staff credentials. The AI agent must provide:'); ?></p>
-    <ul>
-        <li><strong><?php echo __('Username'); ?>:</strong> <?php echo __('Staff username or email'); ?></li>
-        <li><strong><?php echo __('Password'); ?>:</strong> <?php echo __('Staff password'); ?></li>
-    </ul>
-    <p><em><?php echo __('Note: The authenticated staff member\'s permissions determine what tickets and data the AI agent can access.'); ?></em></p>
+    <!-- Tools & Resources -->
+    <div class="mcp-section">
+        <ul class="mcp-tabs">
+            <li class="active"><a href="#tools-tab" onclick="switchTab(event, 'tools-tab')"><?php echo __('Available Tools'); ?></a></li>
+            <li><a href="#resources-tab" onclick="switchTab(event, 'resources-tab')"><?php echo __('Resources'); ?></a></li>
+            <li><a href="#methods-tab" onclick="switchTab(event, 'methods-tab')"><?php echo __('Protocol Methods'); ?></a></li>
+        </ul>
 
-    <h3><i class="icon-wrench"></i> <?php echo __('Available Tools'); ?></h3>
-    <p><?php echo __('The MCP server exposes the following tools for AI agents:'); ?></p>
+        <div id="tools-tab" class="mcp-tab-content active">
+            <table class="mcp-tools-table">
+                <thead>
+                    <tr>
+                        <th width="22%"><?php echo __('Tool'); ?></th>
+                        <th><?php echo __('Description'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>search_tickets</code></td><td><?php echo __('Search and filter tickets by status, department, assignee, date range, and keywords'); ?></td></tr>
+                    <tr><td><code>get_ticket</code></td><td><?php echo __('Retrieve full ticket details including thread, collaborators, and custom fields'); ?></td></tr>
+                    <tr><td><code>create_ticket</code></td><td><?php echo __('Create a new support ticket on behalf of a user'); ?></td></tr>
+                    <tr><td><code>reply_to_ticket</code></td><td><?php echo __('Post a reply to a ticket (visible to user)'); ?></td></tr>
+                    <tr><td><code>add_note_to_ticket</code></td><td><?php echo __('Add an internal note to a ticket (staff only)'); ?></td></tr>
+                    <tr><td><code>update_ticket_status</code></td><td><?php echo __('Change ticket status (open, closed, resolved, etc.)'); ?></td></tr>
+                    <tr><td><code>assign_ticket</code></td><td><?php echo __('Assign a ticket to a staff member or team'); ?></td></tr>
+                    <tr><td><code>search_tasks</code></td><td><?php echo __('Search and filter tasks'); ?></td></tr>
+                    <tr><td><code>create_task</code></td><td><?php echo __('Create a new standalone or ticket-linked task'); ?></td></tr>
+                    <tr><td><code>update_task</code></td><td><?php echo __('Update task details, status, or assignment'); ?></td></tr>
+                </tbody>
+            </table>
+        </div>
 
-    <table class="list" border="0" cellspacing="1" cellpadding="5" style="margin-bottom: 20px;">
-        <thead>
-            <tr>
-                <th width="25%"><?php echo __('Tool'); ?></th>
-                <th width="75%"><?php echo __('Description'); ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><strong>search_tickets</strong></td><td><?php echo __('Search and filter tickets by status, department, assignee, date range, and keywords'); ?></td></tr>
-            <tr><td><strong>get_ticket</strong></td><td><?php echo __('Retrieve full ticket details including thread, collaborators, and custom fields'); ?></td></tr>
-            <tr><td><strong>create_ticket</strong></td><td><?php echo __('Create a new support ticket'); ?></td></tr>
-            <tr><td><strong>reply_to_ticket</strong></td><td><?php echo __('Post a reply to a ticket (visible to user)'); ?></td></tr>
-            <tr><td><strong>add_note_to_ticket</strong></td><td><?php echo __('Add an internal note to a ticket (staff only)'); ?></td></tr>
-            <tr><td><strong>update_ticket_status</strong></td><td><?php echo __('Change ticket status (open, closed, resolved, etc.)'); ?></td></tr>
-            <tr><td><strong>assign_ticket</strong></td><td><?php echo __('Assign a ticket to a staff member or team'); ?></td></tr>
-            <tr><td><strong>search_tasks</strong></td><td><?php echo __('Search and filter tasks'); ?></td></tr>
-            <tr><td><strong>create_task</strong></td><td><?php echo __('Create a new task'); ?></td></tr>
-            <tr><td><strong>update_task</strong></td><td><?php echo __('Update task details or status'); ?></td></tr>
-        </tbody>
-    </table>
+        <div id="resources-tab" class="mcp-tab-content">
+            <table class="mcp-tools-table">
+                <thead>
+                    <tr>
+                        <th width="22%"><?php echo __('Resource'); ?></th>
+                        <th><?php echo __('Description'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>departments</code></td><td><?php echo __('List of all departments with IDs and settings'); ?></td></tr>
+                    <tr><td><code>help-topics</code></td><td><?php echo __('List of all help topics for ticket categorization'); ?></td></tr>
+                    <tr><td><code>staff</code></td><td><?php echo __('List of all staff members with their departments'); ?></td></tr>
+                    <tr><td><code>teams</code></td><td><?php echo __('List of all teams for ticket assignment'); ?></td></tr>
+                    <tr><td><code>statuses</code></td><td><?php echo __('List of all ticket statuses and their states'); ?></td></tr>
+                    <tr><td><code>priorities</code></td><td><?php echo __('List of all priority levels'); ?></td></tr>
+                </tbody>
+            </table>
+        </div>
 
-    <h3><i class="icon-folder-open"></i> <?php echo __('Available Resources'); ?></h3>
-    <p><?php echo __('The MCP server provides access to these resources for context:'); ?></p>
+        <div id="methods-tab" class="mcp-tab-content">
+            <p style="margin-bottom: 15px; color: #666;"><?php echo __('The MCP server implements JSON-RPC 2.0 with these methods:'); ?></p>
+            <table class="mcp-tools-table">
+                <thead>
+                    <tr>
+                        <th width="22%"><?php echo __('Method'); ?></th>
+                        <th><?php echo __('Description'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>initialize</code></td><td><?php echo __('Initialize the MCP session and exchange capabilities'); ?></td></tr>
+                    <tr><td><code>tools/list</code></td><td><?php echo __('List all available tools with their schemas'); ?></td></tr>
+                    <tr><td><code>tools/call</code></td><td><?php echo __('Execute a tool with the provided arguments'); ?></td></tr>
+                    <tr><td><code>resources/list</code></td><td><?php echo __('List all available resources'); ?></td></tr>
+                    <tr><td><code>resources/read</code></td><td><?php echo __('Read the contents of a specific resource'); ?></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <table class="list" border="0" cellspacing="1" cellpadding="5" style="margin-bottom: 20px;">
-        <thead>
-            <tr>
-                <th width="25%"><?php echo __('Resource'); ?></th>
-                <th width="75%"><?php echo __('Description'); ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><strong>departments</strong></td><td><?php echo __('List of all departments'); ?></td></tr>
-            <tr><td><strong>help-topics</strong></td><td><?php echo __('List of all help topics'); ?></td></tr>
-            <tr><td><strong>staff</strong></td><td><?php echo __('List of all staff members'); ?></td></tr>
-            <tr><td><strong>teams</strong></td><td><?php echo __('List of all teams'); ?></td></tr>
-            <tr><td><strong>statuses</strong></td><td><?php echo __('List of all ticket statuses'); ?></td></tr>
-            <tr><td><strong>priorities</strong></td><td><?php echo __('List of all priority levels'); ?></td></tr>
-        </tbody>
-    </table>
+    <!-- Configuration Examples -->
+    <div class="mcp-section">
+        <ul class="mcp-tabs">
+            <li class="active"><a href="#claude-tab" onclick="switchTab(event, 'claude-tab')"><?php echo __('Claude Desktop'); ?></a></li>
+            <li><a href="#curl-tab" onclick="switchTab(event, 'curl-tab')"><?php echo __('cURL / Direct API'); ?></a></li>
+        </ul>
 
-    <h3><i class="icon-cog"></i> <?php echo __('Claude Desktop Configuration'); ?></h3>
-    <p><?php echo __('To connect Claude Desktop to osTicket, add the following to your Claude Desktop configuration file:'); ?></p>
-    <p><strong>Windows:</strong> <code>%APPDATA%\Claude\claude_desktop_config.json</code></p>
-    <p><strong>macOS:</strong> <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></p>
+        <div id="claude-tab" class="mcp-tab-content active">
+            <p style="margin-bottom: 10px;"><?php echo __('Add this to your Claude Desktop configuration:'); ?></p>
+            <ul class="mcp-list" style="color: #666; font-size: 13px;">
+                <li><strong>Windows:</strong> <code style="background:#f0f0f0; padding:2px 6px; border-radius:3px;">%APPDATA%\Claude\claude_desktop_config.json</code></li>
+                <li><strong>macOS:</strong> <code style="background:#f0f0f0; padding:2px 6px; border-radius:3px;">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
+            </ul>
 
-    <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;">{
-  "mcpServers": {
-    "osticket": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "<?php echo Format::htmlchars($mcpEndpoint); ?>",
-        "--header",
-        "Authorization: Basic ${OSTICKET_AUTH}"
+            <div class="mcp-code-block">
+<pre>{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"osticket"</span>: {
+      <span class="key">"command"</span>: <span class="string">"npx"</span>,
+      <span class="key">"args"</span>: [
+        <span class="string">"mcp-remote"</span>,
+        <span class="string">"<?php echo Format::htmlchars($mcpEndpoint); ?>"</span>,
+        <span class="string">"--header"</span>,
+        <span class="string">"Authorization: Basic ${OSTICKET_AUTH}"</span>
       ],
-      "env": {
-        "OSTICKET_AUTH": "&lt;base64-encoded username:password&gt;"
+      <span class="key">"env"</span>: {
+        <span class="key">"OSTICKET_AUTH"</span>: <span class="string">"&lt;base64-encoded username:password&gt;"</span>
       }
     }
   }
 }</pre>
+            </div>
 
-    <p style="margin-top: 15px;">
-        <strong><?php echo __('To generate the Base64 auth string:'); ?></strong>
-    </p>
-    <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;"># Linux/macOS
+            <div class="mcp-note">
+                <i class="icon-info-sign"></i>
+                <strong><?php echo __('Generate Base64 auth string:'); ?></strong>
+                <div class="mcp-code-block" style="margin-top: 10px; margin-bottom: 0;">
+<pre><span class="comment"># Linux/macOS</span>
 echo -n "username:password" | base64
 
-# PowerShell
+<span class="comment"># PowerShell</span>
 [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("username:password"))</pre>
+                </div>
+            </div>
+        </div>
 
-    <h3><i class="icon-code"></i> <?php echo __('Direct API Usage'); ?></h3>
-    <p><?php echo __('You can also interact with the MCP endpoint directly using JSON-RPC 2.0:'); ?></p>
+        <div id="curl-tab" class="mcp-tab-content">
+            <p style="margin-bottom: 10px;"><?php echo __('Interact with the MCP endpoint directly using JSON-RPC 2.0:'); ?></p>
 
-    <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;">curl -X POST <?php echo Format::htmlchars($mcpEndpoint); ?> \
-  -H "Content-Type: application/json" \
-  -u "username:password" \
-  -d '{
+            <div class="mcp-code-block">
+<pre>curl -X POST <?php echo Format::htmlchars($mcpEndpoint); ?> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -u <span class="string">"username:password"</span> \
+  -d <span class="string">'{
     "jsonrpc": "2.0",
     "id": 1,
     "method": "tools/call",
@@ -131,15 +394,43 @@ echo -n "username:password" | base64
         "limit": 10
       }
     }
-  }'</pre>
+  }'</span></pre>
+            </div>
 
-    <h3><i class="icon-question-sign"></i> <?php echo __('Protocol Methods'); ?></h3>
-    <p><?php echo __('The MCP server supports these JSON-RPC methods:'); ?></p>
-    <ul>
-        <li><code>initialize</code> - <?php echo __('Initialize the MCP session'); ?></li>
-        <li><code>tools/list</code> - <?php echo __('List available tools'); ?></li>
-        <li><code>tools/call</code> - <?php echo __('Execute a tool'); ?></li>
-        <li><code>resources/list</code> - <?php echo __('List available resources'); ?></li>
-        <li><code>resources/read</code> - <?php echo __('Read a resource'); ?></li>
-    </ul>
+            <p style="margin: 15px 0 10px 0;"><?php echo __('List available tools:'); ?></p>
+            <div class="mcp-code-block">
+<pre>curl -X POST <?php echo Format::htmlchars($mcpEndpoint); ?> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -u <span class="string">"username:password"</span> \
+  -d <span class="string">'{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'</span></pre>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function copyEndpoint() {
+    var endpoint = document.getElementById('mcp-endpoint').textContent;
+    navigator.clipboard.writeText(endpoint).then(function() {
+        var btn = document.querySelector('.copy-btn');
+        var originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="icon-ok"></i> <?php echo __('Copied!'); ?>';
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+        }, 2000);
+    });
+}
+
+function switchTab(event, tabId) {
+    event.preventDefault();
+    var section = event.target.closest('.mcp-section');
+    section.querySelectorAll('.mcp-tabs li').forEach(function(li) {
+        li.classList.remove('active');
+    });
+    section.querySelectorAll('.mcp-tab-content').forEach(function(content) {
+        content.classList.remove('active');
+    });
+    event.target.parentElement.classList.add('active');
+    section.querySelector('#' + tabId).classList.add('active');
+}
+</script>
