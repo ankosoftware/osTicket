@@ -728,6 +728,13 @@ class CustomQueue extends VerySimpleModel {
                 "bits" => QueueColumn::FLAG_SORTABLE,
             )),
             QueueColumn::placeholder(array(
+                "id" => 6,
+                "heading" => __("Status"),
+                "primary" => 'status__id',
+                "width" => 100,
+                "bits" => QueueColumn::FLAG_SORTABLE,
+            )),
+            QueueColumn::placeholder(array(
                 "id" => 5,
                 "heading" => __("Priority"),
                 "primary" => 'cdata__priority',
