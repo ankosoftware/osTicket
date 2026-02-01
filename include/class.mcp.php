@@ -1792,7 +1792,32 @@ class McpProtocolHandler {
         $oldStaff = $thisstaff;
         $thisstaff = $this->staff;
 
+        // Try changeOwner first, but for admins handle directly if it fails
+        // (changeOwner has internal permission checks that may fail even for admins)
         $result = $ticket->changeOwner($user);
+
+        if (!$result && $this->staff->isAdmin()) {
+            // Direct owner change for admins - similar to changeOwner internals
+            $ticket->user_id = $user->getId();
+            $result = $ticket->save();
+
+            if ($result) {
+                // Remove new owner from collaborators if present
+                $collaborator = Collaborator::lookup(array(
+                    'user_id' => $user->getId(),
+                    'thread_id' => $ticket->getThreadId()
+                ));
+                if ($collaborator) {
+                    $collaborator->delete();
+                }
+
+                // Log the event
+                $ticket->logEvent('edited', array(
+                    'owner' => $user->getId(),
+                    'fields' => array('Ticket Owner' => (string) $user->getName())
+                ));
+            }
+        }
 
         $thisstaff = $oldStaff;
 
