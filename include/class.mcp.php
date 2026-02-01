@@ -381,6 +381,28 @@ class McpProtocolHandler {
                     )
                 )
             ),
+            'update_ticket_subject' => array(
+                'name' => 'update_ticket_subject',
+                'description' => 'Update the subject/title of a ticket',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'ticket_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Ticket ID'
+                        ),
+                        'ticket_number' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket number (alternative to ticket_id)'
+                        ),
+                        'subject' => array(
+                            'type' => 'string',
+                            'description' => 'New ticket subject/title'
+                        )
+                    ),
+                    'required' => array('subject')
+                )
+            ),
             'search_tasks' => array(
                 'name' => 'search_tasks',
                 'description' => 'Search for tasks with various filters',
@@ -1838,6 +1860,70 @@ class McpProtocolHandler {
                 'name' => (string) $previousOwner->getName(),
                 'email' => $previousOwner->getEmail()
             ) : null
+        );
+    }
+
+    /**
+     * Update ticket subject tool
+     */
+    private function tool_update_ticket_subject($args) {
+        $ticket = $this->resolveTicket($args);
+
+        // Check permission - requires PERM_EDIT
+        $role = $ticket->getRole($this->staff);
+        if (!$this->staff->isAdmin() && (!$role || !$role->hasPerm(Ticket::PERM_EDIT))) {
+            throw new McpException(-32602, 'Permission denied: Cannot edit this ticket');
+        }
+
+        if (empty($args['subject'])) {
+            throw new McpException(-32602, 'Missing required field: subject');
+        }
+
+        $newSubject = trim($args['subject']);
+        if (strlen($newSubject) === 0) {
+            throw new McpException(-32602, 'Subject cannot be empty');
+        }
+
+        // Get the subject answer from dynamic form data
+        $subjectAnswer = $ticket->getAnswer('subject');
+        if (!$subjectAnswer) {
+            throw new McpException(-32603, 'Could not find subject field for this ticket');
+        }
+
+        $previousSubject = $ticket->getSubject();
+
+        // Check if same subject
+        if ($newSubject === $previousSubject) {
+            throw new McpException(-32602, 'Subject is already set to this value');
+        }
+
+        // Temporarily set global staff for logging
+        global $thisstaff;
+        $oldStaff = $thisstaff;
+        $thisstaff = $this->staff;
+
+        // Update the subject
+        $subjectAnswer->setValue($newSubject);
+        $result = $subjectAnswer->save();
+
+        if ($result) {
+            // Log the edit event
+            $ticket->logEvent('edited', array(
+                'fields' => array('Subject' => array($previousSubject, $newSubject))
+            ));
+        }
+
+        $thisstaff = $oldStaff;
+
+        if (!$result) {
+            throw new McpException(-32602, 'Failed to update ticket subject');
+        }
+
+        return array(
+            'success' => true,
+            'ticket_number' => $ticket->getNumber(),
+            'subject' => $newSubject,
+            'previous_subject' => $previousSubject
         );
     }
 
