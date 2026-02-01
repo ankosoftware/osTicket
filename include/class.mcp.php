@@ -240,6 +240,12 @@ class McpProtocolHandler {
                             'type' => 'string',
                             'description' => 'Note content'
                         ),
+                        'format' => array(
+                            'type' => 'string',
+                            'description' => 'Note format: text (plain text) or html (HTML formatted)',
+                            'enum' => array('text', 'html'),
+                            'default' => 'text'
+                        ),
                         'title' => array(
                             'type' => 'string',
                             'description' => 'Note title (optional)'
@@ -335,6 +341,12 @@ class McpProtocolHandler {
                             'type' => 'string',
                             'description' => 'Optional reason for the transfer (will be posted as internal note)'
                         ),
+                        'comments_format' => array(
+                            'type' => 'string',
+                            'description' => 'Comments format: text (plain text) or html (HTML formatted)',
+                            'enum' => array('text', 'html'),
+                            'default' => 'text'
+                        ),
                         'alert' => array(
                             'type' => 'boolean',
                             'description' => 'Send alert to new department members',
@@ -342,6 +354,31 @@ class McpProtocolHandler {
                         )
                     ),
                     'required' => array('dept_id')
+                )
+            ),
+            'change_ticket_owner' => array(
+                'name' => 'change_ticket_owner',
+                'description' => 'Change the owner (client/user) of a ticket',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'ticket_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Ticket ID'
+                        ),
+                        'ticket_number' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket number (alternative to ticket_id)'
+                        ),
+                        'user_id' => array(
+                            'type' => 'integer',
+                            'description' => 'New owner user ID'
+                        ),
+                        'user_email' => array(
+                            'type' => 'string',
+                            'description' => 'New owner email address (alternative to user_id)'
+                        )
+                    )
                 )
             ),
             'search_tasks' => array(
@@ -440,6 +477,12 @@ class McpProtocolHandler {
                         'note' => array(
                             'type' => 'string',
                             'description' => 'Note content (required for add_note action)'
+                        ),
+                        'format' => array(
+                            'type' => 'string',
+                            'description' => 'Note format: text (plain text) or html (HTML formatted)',
+                            'enum' => array('text', 'html'),
+                            'default' => 'text'
                         )
                     ),
                     'required' => array('task_id', 'action')
@@ -1440,8 +1483,14 @@ class McpProtocolHandler {
             throw new McpException(-32602, 'Missing required field: note');
         }
 
+        // Determine note format - default to text
+        $format = $args['format'] ?? 'text';
+        $noteBody = ($format === 'html')
+            ? new HtmlThreadEntryBody($args['note'])
+            : new TextThreadEntryBody($args['note']);
+
         $vars = array(
-            'note' => new TextThreadEntryBody($args['note']),
+            'note' => $noteBody,
             'staffId' => $this->staff->getId(),
             'poster' => $this->staff,
             'ip_address' => $_SERVER['REMOTE_ADDR'] ?? ''
@@ -1672,9 +1721,15 @@ class McpProtocolHandler {
                 $dept->getName()
             );
 
+            // Determine comments format - default to text
+            $commentsFormat = $args['comments_format'] ?? 'text';
+            $noteBody = ($commentsFormat === 'html')
+                ? new HtmlThreadEntryBody($args['comments'])
+                : new TextThreadEntryBody($args['comments']);
+
             $noteErrors = array();
             $ticket->postNote(
-                array('note' => $args['comments'], 'title' => $title),
+                array('note' => $noteBody, 'title' => $title),
                 $noteErrors,
                 $thisstaff,
                 false
@@ -1693,6 +1748,70 @@ class McpProtocolHandler {
             'previous_department' => $currentDept ? array(
                 'id' => $currentDept->getId(),
                 'name' => $currentDept->getName()
+            ) : null
+        );
+    }
+
+    /**
+     * Change ticket owner tool
+     */
+    private function tool_change_ticket_owner($args) {
+        $ticket = $this->resolveTicket($args);
+
+        // Check permission - requires PERM_EDIT
+        $role = $ticket->getRole($this->staff);
+        if (!$this->staff->isAdmin() && (!$role || !$role->hasPerm(Ticket::PERM_EDIT))) {
+            throw new McpException(-32602, 'Permission denied: Cannot edit this ticket');
+        }
+
+        // Resolve the new owner
+        $user = null;
+        if (!empty($args['user_id'])) {
+            $user = User::lookup(intval($args['user_id']));
+            if (!$user) {
+                throw new McpException(-32602, 'Invalid user_id: User not found');
+            }
+        } elseif (!empty($args['user_email'])) {
+            $user = User::lookupByEmail($args['user_email']);
+            if (!$user) {
+                throw new McpException(-32602, 'Invalid user_email: User not found');
+            }
+        } else {
+            throw new McpException(-32602, 'Missing required field: user_id or user_email');
+        }
+
+        // Check if same owner
+        if ($user->getId() == $ticket->getOwnerId()) {
+            throw new McpException(-32602, 'User is already the ticket owner');
+        }
+
+        $previousOwner = $ticket->getOwner();
+
+        // Temporarily set global staff for logging
+        global $thisstaff;
+        $oldStaff = $thisstaff;
+        $thisstaff = $this->staff;
+
+        $result = $ticket->changeOwner($user);
+
+        $thisstaff = $oldStaff;
+
+        if (!$result) {
+            throw new McpException(-32602, 'Failed to change ticket owner');
+        }
+
+        return array(
+            'success' => true,
+            'ticket_number' => $ticket->getNumber(),
+            'owner' => array(
+                'id' => $user->getId(),
+                'name' => (string) $user->getName(),
+                'email' => $user->getEmail()
+            ),
+            'previous_owner' => $previousOwner ? array(
+                'id' => $previousOwner->getId(),
+                'name' => (string) $previousOwner->getName(),
+                'email' => $previousOwner->getEmail()
             ) : null
         );
     }
@@ -1859,8 +1978,13 @@ class McpProtocolHandler {
                 if (empty($args['note'])) {
                     throw new McpException(-32602, 'Missing required field: note for add_note action');
                 }
+                // Determine note format - default to text
+                $format = $args['format'] ?? 'text';
+                $noteBody = ($format === 'html')
+                    ? new HtmlThreadEntryBody($args['note'])
+                    : new TextThreadEntryBody($args['note']);
                 $noteVars = array(
-                    'note' => new TextThreadEntryBody($args['note']),
+                    'note' => $noteBody,
                     'staffId' => $this->staff->getId(),
                     'poster' => $this->staff
                 );
