@@ -125,6 +125,22 @@ if ($_POST && is_object($ticket) && $ticket->getId()) {
             }
         }
         break;
+    case 'reopen':
+        if ($thisclient->getId() != $ticket->getUserId())
+            $errors['err'] = __('Only the ticket owner can reopen this ticket');
+        elseif (!$ticket->isClosed())
+            $errors['err'] = __('Ticket is already open');
+        elseif (!$ticket->isReopenable())
+            $errors['err'] = __('This ticket cannot be reopened');
+        else {
+            $errors_arr = array();
+            if ($ticket->setStatus('open', '', $errors_arr, false)) {
+                $msg = __('Ticket reopened successfully');
+            } else {
+                $errors['err'] = $errors_arr['err'] ?: __('Unable to reopen ticket');
+            }
+        }
+        break;
     default:
         $errors['err']=__('Unknown action');
     }

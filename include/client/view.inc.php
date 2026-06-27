@@ -61,6 +61,17 @@ if ($thisclient && $thisclient->isGuest()
                     </button>
                 </form>
 <?php } ?>
+<?php if ($ticket->isClosed()
+        && $ticket->isReopenable()
+        && $thisclient->getId() == $ticket->getUserId()) { ?>
+                <form action="tickets.php?id=<?php echo $ticket->getId(); ?>" method="post" style="display:inline;">
+                    <?php echo csrf_token(); ?>
+                    <input type="hidden" name="a" value="reopen">
+                    <button type="submit" class="action-button">
+                        <i class="icon-undo"></i> <?php echo __('Reopen'); ?>
+                    </button>
+                </form>
+<?php } ?>
 </div>
             </h1>
         </td>
