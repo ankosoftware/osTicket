@@ -403,6 +403,52 @@ class McpProtocolHandler {
                     'required' => array('subject')
                 )
             ),
+            'edit_ticket' => array(
+                'name' => 'edit_ticket',
+                'description' => 'Edit ticket fields such as subject, priority, help topic, SLA, due date, and custom form fields',
+                'inputSchema' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'ticket_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Ticket ID'
+                        ),
+                        'ticket_number' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket number (alternative to ticket_id)'
+                        ),
+                        'subject' => array(
+                            'type' => 'string',
+                            'description' => 'New ticket subject'
+                        ),
+                        'priority_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Priority ID (1=Low, 2=Normal, 3=High, 4=Emergency)'
+                        ),
+                        'topic_id' => array(
+                            'type' => 'integer',
+                            'description' => 'Help topic ID'
+                        ),
+                        'sla_id' => array(
+                            'type' => 'integer',
+                            'description' => 'SLA plan ID (0 to use default)'
+                        ),
+                        'duedate' => array(
+                            'type' => 'string',
+                            'description' => 'Due date (YYYY-MM-DD HH:MM:SS). Empty string to clear.'
+                        ),
+                        'source' => array(
+                            'type' => 'string',
+                            'description' => 'Ticket source (Phone, Email, Web, API, Other)',
+                            'enum' => array('Phone', 'Email', 'Web', 'API', 'Other')
+                        ),
+                        'note' => array(
+                            'type' => 'string',
+                            'description' => 'Internal note explaining the edit'
+                        )
+                    )
+                )
+            ),
             'search_tasks' => array(
                 'name' => 'search_tasks',
                 'description' => 'Search for tasks with various filters',
@@ -1924,6 +1970,142 @@ class McpProtocolHandler {
             'ticket_number' => $ticket->getNumber(),
             'subject' => $newSubject,
             'previous_subject' => $previousSubject
+        );
+    }
+
+    /**
+     * Edit ticket tool — update subject, priority, help topic, SLA, due date, source
+     */
+    private function tool_edit_ticket($args) {
+        $ticket = $this->resolveTicket($args);
+
+        $role = $ticket->getRole($this->staff);
+        if (!$this->staff->isAdmin() && (!$role || !$role->hasPerm(Ticket::PERM_EDIT))) {
+            throw new McpException(-32602, 'Permission denied: Cannot edit this ticket');
+        }
+
+        global $thisstaff;
+        $oldStaff = $thisstaff;
+        $thisstaff = $this->staff;
+
+        $changes = array();
+        $formChanges = array();
+
+        // Subject — stored as dynamic form answer
+        if (isset($args['subject'])) {
+            $newSubject = trim($args['subject']);
+            if (strlen($newSubject) === 0)
+                throw new McpException(-32602, 'Subject cannot be empty');
+            $prev = $ticket->getSubject();
+            if ($newSubject !== $prev) {
+                $subjectAnswer = $ticket->getAnswer('subject');
+                if ($subjectAnswer) {
+                    $subjectAnswer->setValue($newSubject);
+                    $subjectAnswer->save();
+                    $formChanges['Subject'] = array($prev, $newSubject);
+                }
+            }
+        }
+
+        // Priority — stored as dynamic form answer (ChoiceField with value_id)
+        if (isset($args['priority_id'])) {
+            $newPri = intval($args['priority_id']);
+            $priority = Priority::lookup($newPri);
+            if (!$priority)
+                throw new McpException(-32602, "Invalid priority_id: {$newPri}");
+            $prev = $ticket->getPriorityId();
+            if ($newPri != $prev) {
+                foreach (DynamicFormEntry::forTicket($ticket->getId()) as $form) {
+                    $form->setAnswer('priority', null, $newPri);
+                    $form->saveAnswers(function($f) { return true; });
+                }
+                $formChanges['Priority'] = array($prev, $newPri);
+            }
+        }
+
+        // Help topic
+        if (isset($args['topic_id'])) {
+            $newTopic = intval($args['topic_id']);
+            $topic = Topic::lookup($newTopic);
+            if (!$topic)
+                throw new McpException(-32602, "Invalid topic_id: {$newTopic}");
+            $prev = $ticket->getTopicId();
+            if ($newTopic != $prev) {
+                $ticket->topic_id = $newTopic;
+                $changes['topic_id'] = array($prev, $newTopic);
+            }
+        }
+
+        // SLA
+        if (isset($args['sla_id'])) {
+            $newSla = intval($args['sla_id']);
+            $prev = $ticket->getSLAId();
+            if ($newSla != $prev) {
+                $ticket->sla_id = $newSla;
+                $changes['sla_id'] = array($prev, $newSla);
+            }
+        }
+
+        // Due date
+        if (array_key_exists('duedate', $args)) {
+            $prev = $ticket->getDueDate();
+            if ($args['duedate'] === '' || $args['duedate'] === null) {
+                $ticket->duedate = null;
+                if ($prev)
+                    $changes['duedate'] = array($prev, null);
+            } else {
+                $ts = strtotime($args['duedate']);
+                if ($ts === false)
+                    throw new McpException(-32602, 'Invalid duedate format, use YYYY-MM-DD HH:MM:SS');
+                $newDue = date('Y-m-d H:i:s', $ts);
+                if ($newDue !== $prev) {
+                    $ticket->duedate = $newDue;
+                    $ticket->isoverdue = 0;
+                    $changes['duedate'] = array($prev, $newDue);
+                }
+            }
+        }
+
+        // Source
+        if (isset($args['source'])) {
+            $prev = $ticket->getSource();
+            if ($args['source'] !== $prev) {
+                $ticket->source = $args['source'];
+                $changes['source'] = array($prev, $args['source']);
+            }
+        }
+
+        if (empty($changes) && empty($formChanges)) {
+            $thisstaff = $oldStaff;
+            throw new McpException(-32602, 'No changes to apply');
+        }
+
+        if ($changes) {
+            if (!$ticket->save()) {
+                $thisstaff = $oldStaff;
+                throw new McpException(-32603, 'Failed to save ticket');
+            }
+        }
+
+        $allChanges = $changes;
+        if ($formChanges)
+            $allChanges['fields'] = $formChanges;
+
+        $ticket->logEvent('edited', $allChanges);
+
+        if (!empty($args['note'])) {
+            $ticket->logNote(_S('Ticket Updated'), $args['note'], $this->staff);
+        }
+
+        $ticket->updateEstDueDate();
+        Signal::send('model.updated', $ticket);
+
+        $thisstaff = $oldStaff;
+
+        return array(
+            'success' => true,
+            'ticket_number' => $ticket->getNumber(),
+            'changes' => $allChanges
         );
     }
 
