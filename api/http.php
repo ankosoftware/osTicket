@@ -25,7 +25,8 @@ $dispatcher = patterns('',
         // OAuth 2.1 endpoints for MCP authentication (RFC9728, RFC8414)
         url_get("^/\.well-known/oauth-protected-resource$", array('api.oauth.php:OAuthApiController', 'protectedResourceMetadata')),
         url_get("^/\.well-known/oauth-authorization-server$", array('api.oauth.php:OAuthApiController', 'authorizationServerMetadata')),
-        url_post("^/oauth/token$", array('api.oauth.php:OAuthApiController', 'token'))
+        url_post("^/oauth/token$", array('api.oauth.php:OAuthApiController', 'token')),
+        url("^/mcp/file$", array('api.mcp-file.php:McpFileApiController', 'download'))
         );
 
 // Send api signal so backend can register endpoints

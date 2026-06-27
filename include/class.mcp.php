@@ -3446,9 +3446,24 @@ class McpProtocolHandler {
      * Format attachment
      */
     private function formatAttachment($att) {
+        global $cfg;
         $file = $att->getFile();
-        // Get filename safely - getFilename() may fail if name is empty and file is null
         $filename = $att->name ?: ($file ? $file->name : 'unknown');
+        $downloadUrl = null;
+        if ($file) {
+            $key = $file->getKey();
+            $expires = time() + 3600;
+            $signature = hash_hmac('sha256',
+                implode("\n", array($key, $expires, 'mcp-file-download')),
+                SECRET_SALT);
+            $baseUrl = $cfg ? rtrim($cfg->getBaseUrl(), '/') : '';
+            $downloadUrl = sprintf('%s/api/mcp/file?%s', $baseUrl,
+                http_build_query(array(
+                    'key' => $key,
+                    'expires' => $expires,
+                    'signature' => $signature,
+                )));
+        }
         return array(
             'id' => $att->getId(),
             'file_id' => $att->getFileId(),
@@ -3456,8 +3471,7 @@ class McpProtocolHandler {
             'size' => $file ? $file->getSize() : null,
             'type' => $file ? $file->getType() : null,
             'inline' => (bool) $att->inline,
-            'cid' => $file ? $file->getKey() : null,
-            'download_url' => $file ? $file->getExternalDownloadUrl() : null
+            'download_url' => $downloadUrl
         );
     }
 
