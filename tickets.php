@@ -141,6 +141,25 @@ if ($_POST && is_object($ticket) && $ticket->getId()) {
             }
         }
         break;
+    case 'markopen':
+        // Allow the ticket owner to move an open-state ticket (e.g.
+        // "Waiting for Customer") back to the default Open status.
+        $defaultStatusId = $cfg->getDefaultTicketStatusId();
+        if ($thisclient->getId() != $ticket->getUserId())
+            $errors['err'] = __('Only the ticket owner can update this ticket');
+        elseif ($ticket->isClosed())
+            $errors['err'] = __('This ticket is closed');
+        elseif ($ticket->getStatusId() == $defaultStatusId)
+            $errors['err'] = __('Ticket is already open');
+        else {
+            $errors_arr = array();
+            if ($ticket->setStatus($defaultStatusId, '', $errors_arr, false)) {
+                $msg = __('Ticket marked as open');
+            } else {
+                $errors['err'] = $errors_arr['err'] ?: __('Unable to update ticket status');
+            }
+        }
+        break;
     default:
         $errors['err']=__('Unknown action');
     }
