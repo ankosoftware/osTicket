@@ -40,7 +40,20 @@ if ($thisclient && $thisclient->isGuest()
                     echo $subject_field->display($ticket->getSubject()); ?>
                 </b>
                 <small>#<?php echo $ticket->getNumber(); ?></small>
-<div class="pull-right">
+<style>
+.ticket-actions { display: inline-flex; align-items: center; gap: 5px; }
+.ticket-actions form { display: inline; margin: 0; }
+.ticket-actions .action-button {
+    margin-left: 0;
+    box-sizing: content-box;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    vertical-align: middle;
+}
+</style>
+<div class="pull-right ticket-actions">
       <a class="action-button" href="tickets.php?a=print&id=<?php
           echo $ticket->getId(); ?>"><i class="icon-print"></i> <?php echo __('Print'); ?></a>
 
@@ -225,6 +238,18 @@ echo $attrs; ?>><?php echo $draft ?: $info['message'];
 <?php } ?>
     <p style="text-align:center">
         <input type="submit" value="<?php echo __('Post Reply');?>">
+<?php if ($cfg->allowClientClose() && !$ticket->isClosed()) { // Open-state ticket: allow reply + resolve ?>
+        <button type="submit" name="reply_action" value="resolve" style="cursor:pointer;-webkit-appearance:button;">
+            <?php echo __('Reply and Resolve'); ?>
+        </button>
+<?php }
+    // Reply + reopen: closed & reopenable, or an open-state status other than the default Open
+    if (($ticket->isClosed() && $ticket->isReopenable())
+            || (!$ticket->isClosed() && $ticket->getStatusId() != $cfg->getDefaultTicketStatusId())) { ?>
+        <button type="submit" name="reply_action" value="reopen" style="cursor:pointer;-webkit-appearance:button;">
+            <?php echo __('Reply and Reopen'); ?>
+        </button>
+<?php } ?>
         <input type="reset" value="<?php echo __('Reset');?>">
         <input type="button" value="<?php echo __('Cancel');?>" onClick="history.go(-1)">
     </p>

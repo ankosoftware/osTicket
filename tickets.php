@@ -99,6 +99,21 @@ if ($_POST && is_object($ticket) && $ticket->getId()) {
                 // Drop attachments
                 $attachments->reset();
                 $attachments->getForm()->setSource(array());
+
+                // Combined reply actions from the "Reply and ..." buttons
+                $replyAction = $_POST['reply_action'] ?? '';
+                if ($replyAction == 'resolve' && !$ticket->isClosed()) {
+                    // Move to the first closed-state status (e.g. "Resolved")
+                    $se = array();
+                    if ($ticket->setStatus('closed', '', $se, false))
+                        $msg = __('Reply posted and ticket resolved');
+                } elseif ($replyAction == 'reopen'
+                        && $ticket->getStatusId() != $cfg->getDefaultTicketStatusId()) {
+                    // Move to the default Open status
+                    $se = array();
+                    if ($ticket->setStatus($cfg->getDefaultTicketStatusId(), '', $se, false))
+                        $msg = __('Reply posted and ticket reopened');
+                }
             } else {
                 $errors['err'] = sprintf('%s %s',
                     __('Unable to post the message.'),
